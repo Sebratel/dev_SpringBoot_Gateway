@@ -15,7 +15,7 @@ continuam idênticas atrás do gateway. Parte da migração descrita em `Sebrate
 
 ## Política de tempo
 - Limite padrão de resposta de **60 s** (`GATEWAY_DEFAULT_RESPONSE_TIMEOUT`): estourou, o gateway responde **504**.
-- **Sem limite** só nas 18 rotas lentas conhecidas (`gateway/src/main/resources/routes/slow-routes.yml`, metadata `response-timeout: -1`).
+- **Sem limite** só nas 18 rotas lentas conhecidas (`gateway/src/main/resources/routes/routes.yml`, metadata `response-timeout: -1`).
   A lista é a mesma de `contract-tests/src/test/resources/known-slow-routes.txt`; o `TimeoutPolicyTest` garante que são iguais.
 - Isso só vale atrás do gateway: o proxy do stage corta em ~90 s e precisa de `proxy_read_timeout` maior nessas rotas.
 
