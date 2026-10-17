@@ -17,9 +17,9 @@ spring:
       server:
         webflux:
           httpclient:
-            # Limite padrao de resposta: estourou, o gateway responde 504. Fica ABAIXO dos 90 s do proxy do
-            # stage para o erro vir do gateway. As rotas lentas (no routes/routes.yml, metadata response-timeout: -1) ignoram este limite.
-            response-timeout: ${GATEWAY_DEFAULT_RESPONSE_TIMEOUT:60s}
+            # Limite padrao de resposta: estourou, o gateway responde 504. Em stage fica folgado (rotas de relatorio levam minutos); o proxy do
+            # stage corta em 90 s, entao use a porta direta para essas. As rotas lentas (no routes/routes.yml, metadata response-timeout: -1) ignoram este limite.
+            response-timeout: ${GATEWAY_DEFAULT_RESPONSE_TIMEOUT:600s}
             connect-timeout: 10000
   config:
     import:

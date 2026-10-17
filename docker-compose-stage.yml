@@ -24,7 +24,7 @@ services:
       - PESSOAS_URL=http://pessoas-service-stage:8106
       # Monolito atual do stage (container do BFF). Ajustar se o nome mudar.
       - LEGACY_BFF_URL=http://bff-java-service-stage:8085
-      - GATEWAY_DEFAULT_RESPONSE_TIMEOUT=60s
+      - GATEWAY_DEFAULT_RESPONSE_TIMEOUT=600s
       # Autenticacao (so o gateway autentica). Basic legado: as mesmas SECURITY_USER/SECURITY_PASS do BFF original.
       - SECURITY_USER=${SECURITY_USER:-}
       - SECURITY_PASS=${SECURITY_PASS:-}
