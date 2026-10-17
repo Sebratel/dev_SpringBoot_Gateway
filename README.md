@@ -42,7 +42,8 @@ Stack criada **a partir do Git**: repositório `https://github.com/Sebratel/dev_
 arquivo `docker-compose-stage.yml`. O container se chama `api-gateway-stage` e fica na rede externa `proxy`.
 O gateway publica a porta **8094** do host (container `8085`).
 
-A imagem é construída pelo `Dockerfile` (multi-stage, Temurin 21, usuário não-root). O `sebratel-java-parent` é construído
-da fonte pública na própria imagem, então o build **não precisa de token**.
+A imagem `ghcr.io/sebratel/api-gateway:staging` é construída pelo GitHub Actions (`.github/workflows/staging-image.yml`, a cada push em `staging`) a partir
+do `Dockerfile` (multi-stage, Temurin 21, usuário não-root) e publicada no GHCR; o Portainer só a baixa. Construir a imagem dentro do host
+passa de 90 s, e o proxy do stage derruba a requisição de deploy. O `sebratel-java-parent` é construído da fonte pública na própria imagem, sem token.
 
 O branch `staging` recebe o código mais atualizado: `main` → `staging` antes de cada deploy.

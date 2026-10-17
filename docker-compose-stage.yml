@@ -1,10 +1,10 @@
-# Stack de STAGING (Portainer, a partir do Git: branch staging).
+# Stack de STAGING (Portainer, a partir do Git: branch staging). A imagem e construida no GitHub Actions
+# (workflow staging-image.yml) e publicada no GHCR; o Portainer so a baixa.
 # Rede externa "proxy": a mesma do BFF atual; os serviços se enxergam pelo nome do container.
 services:
   api-gateway:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/sebratel/api-gateway:staging
+    pull_policy: always
     container_name: api-gateway-stage
     restart: unless-stopped
     mem_limit: 512m
