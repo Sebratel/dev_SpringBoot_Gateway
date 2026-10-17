@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>br.com.sebratel</groupId>
+        <artifactId>sebratel-parent</artifactId>
+        <version>1.0.0</version>
+        <relativePath/>
+    </parent>
+    <artifactId>api-gateway-parent</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>api-gateway-parent</name>
+    <description>API Gateway da Sebratel (roteamento, autenticação, resiliência) e testes de paridade de contrato</description>
+
+    <!--
+      O sebratel-parent e o sebratel-build-rules (plugin do Checkstyle) vem do GitHub Packages (privado).
+      Exige <server><id>github</id> no ~/.m2/settings.xml com token read:packages. Ver README.
+    -->
+    <repositories>
+        <repository>
+            <id>github</id>
+            <url>https://maven.pkg.github.com/Sebratel/dev_Maven_Parent</url>
+        </repository>
+    </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>github</id>
+            <url>https://maven.pkg.github.com/Sebratel/dev_Maven_Parent</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <modules>
+        <module>gateway</module>
+        <module>contract-tests</module>
+    </modules>
+
+    <properties>
+        <!-- Linha de release do Spring Cloud compativel com Spring Boot 3.5.x. -->
+        <spring-cloud.version>2025.0.0</spring-cloud.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+</project>

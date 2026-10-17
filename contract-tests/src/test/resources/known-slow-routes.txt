@@ -1,0 +1,21 @@
+# Rotas que estouram o proxy do stage (504 em ~90 s) mesmo no monolito. O teste aceita 504 nelas e
+# nao compara golden file. Retirar uma linha quando a rota passar a responder dentro do limite.
+# Formato: METODO /path
+GET /api/v1/consumo
+GET /api/v1/consumo-alto
+GET /api/v1/consumo-alto-paginado
+GET /api/v1/contracts/last-connections
+GET /api/v1/contracts/ultimas-conexoes
+GET /api/v1/contratos/last-connections
+GET /api/v1/contratos/ultimas-conexoes
+GET /api/v1/high-consumption
+GET /api/v1/high-consumption-paged
+GET /api/v1/primeiro-pagante-mensal/first-monthly-payer
+GET /api/v1/primeiro-pagante-mensal/primeiro-pagante-mensal
+GET /api/v1/radius/first-authentications
+GET /api/v1/relatorios/first-monthly-payer
+GET /api/v1/relatorios/primeiro-pagante-mensal
+GET /api/v1/reports/first-monthly-payer
+GET /api/v1/reports/primeiro-pagante-mensal
+GET /api/v1/ultima-conexao/last-connections
+GET /api/v1/ultima-conexao/ultimas-conexoes

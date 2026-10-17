@@ -1,0 +1,10 @@
+# Destinos (rede interna). Rollback de um dominio = apontar a variavel para o legacy-bff.
+# As rotas por dominio sao geradas a partir de specs/API_GATEWAY_ENDPOINTS.md (fase 2/3).
+gateway:
+  upstreams:
+    massivas: ${MASSIVAS_URL:http://massivas-service:8101}
+    splitters: ${SPLITTERS_URL:http://splitters-service:8102}
+    comercial: ${COMERCIAL_URL:http://comercial-service:8103}
+    radius: ${RADIUS_URL:http://radius-service:8104}
+    estoque: ${ESTOQUE_URL:http://estoque-service:8105}
+    pessoas: ${PESSOAS_URL:http://pessoas-service:8106}

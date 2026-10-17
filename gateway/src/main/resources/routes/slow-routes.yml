@@ -1,0 +1,139 @@
+# Rotas lentas conhecidas: SEM limite de tempo de resposta no gateway (metadata response-timeout: -1).
+# Todas as demais rotas seguem o limite padrao (GATEWAY_DEFAULT_RESPONSE_TIMEOUT, padrao 60s), e estouram em 504.
+#
+# FONTE: platform/contract-tests/src/test/resources/known-slow-routes.txt (mesma lista de 18 rotas).
+# Ao adicionar ou remover uma rota lenta, altere os DOIS arquivos; o TimeoutPolicyTest confere que sao iguais.
+#
+# Fase 2: estas rotas apontam ao monolito (LEGACY_BFF_URL). Na fase 3 cada uma passa a apontar ao seu servico.
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: slow-api-v1-consumo
+              uri: ${LEGACY_BFF_URL:http://bff-app:8085}
+              predicates:
+                - Method=GET
+                - Path=/api/v1/consumo
+              metadata:
+                response-timeout: -1
+            - id: slow-api-v1-consumo-alto
+              uri: ${LEGACY_BFF_URL:http://bff-app:8085}
+              predicates:
+                - Method=GET
+                - Path=/api/v1/consumo-alto
+              metadata:
+                response-timeout: -1
+            - id: slow-api-v1-consumo-alto-paginado
+              uri: ${LEGACY_BFF_URL:http://bff-app:8085}
+              predicates:
+                - Method=GET
+                - Path=/api/v1/consumo-alto-paginado
+              metadata:
+                response-timeout: -1
+            - id: slow-api-v1-contracts-last-connections
+              uri: ${LEGACY_BFF_URL:http://bff-app:8085}
+              predicates:
+                - Method=GET
+                - Path=/api/v1/contracts/last-connections
+              metadata:
+                response-timeout: -1
+            - id: slow-api-v1-contracts-ultimas-conexoes
+              uri: ${LEGACY_BFF_URL:http://bff-app:8085}
+              predicates:
+                - Method=GET
+                - Path=/api/v1/contracts/ultimas-conexoes
+              metadata:
+                response-timeout: -1
+            - id: slow-api-v1-contratos-last-connections
+              uri: ${LEGACY_BFF_URL:http://bff-app:8085}
+              predicates:
+                - Method=GET
+                - Path=/api/v1/contratos/last-connections
+              metadata:
+                response-timeout: -1
+            - id: slow-api-v1-contratos-ultimas-conexoes
+              uri: ${LEGACY_BFF_URL:http://bff-app:8085}
+              predicates:
+                - Method=GET
+                - Path=/api/v1/contratos/ultimas-conexoes
+              metadata:
+                response-timeout: -1
+            - id: slow-api-v1-high-consumption
+              uri: ${LEGACY_BFF_URL:http://bff-app:8085}
+              predicates:
+                - Method=GET
+                - Path=/api/v1/high-consumption
+              metadata:
+                response-timeout: -1
+            - id: slow-api-v1-high-consumption-paged
+              uri: ${LEGACY_BFF_URL:http://bff-app:8085}
+              predicates:
+                - Method=GET
+                - Path=/api/v1/high-consumption-paged
+              metadata:
+                response-timeout: -1
+            - id: slow-api-v1-primeiro-pagante-mensal-first-monthly-payer
+              uri: ${LEGACY_BFF_URL:http://bff-app:8085}
+              predicates:
+                - Method=GET
+                - Path=/api/v1/primeiro-pagante-mensal/first-monthly-payer
+              metadata:
+                response-timeout: -1
+            - id: slow-api-v1-primeiro-pagante-mensal-primeiro-pagante-mensal
+              uri: ${LEGACY_BFF_URL:http://bff-app:8085}
+              predicates:
+                - Method=GET
+                - Path=/api/v1/primeiro-pagante-mensal/primeiro-pagante-mensal
+              metadata:
+                response-timeout: -1
+            - id: slow-api-v1-radius-first-authentications
+              uri: ${LEGACY_BFF_URL:http://bff-app:8085}
+              predicates:
+                - Method=GET
+                - Path=/api/v1/radius/first-authentications
+              metadata:
+                response-timeout: -1
+            - id: slow-api-v1-relatorios-first-monthly-payer
+              uri: ${LEGACY_BFF_URL:http://bff-app:8085}
+              predicates:
+                - Method=GET
+                - Path=/api/v1/relatorios/first-monthly-payer
+              metadata:
+                response-timeout: -1
+            - id: slow-api-v1-relatorios-primeiro-pagante-mensal
+              uri: ${LEGACY_BFF_URL:http://bff-app:8085}
+              predicates:
+                - Method=GET
+                - Path=/api/v1/relatorios/primeiro-pagante-mensal
+              metadata:
+                response-timeout: -1
+            - id: slow-api-v1-reports-first-monthly-payer
+              uri: ${LEGACY_BFF_URL:http://bff-app:8085}
+              predicates:
+                - Method=GET
+                - Path=/api/v1/reports/first-monthly-payer
+              metadata:
+                response-timeout: -1
+            - id: slow-api-v1-reports-primeiro-pagante-mensal
+              uri: ${LEGACY_BFF_URL:http://bff-app:8085}
+              predicates:
+                - Method=GET
+                - Path=/api/v1/reports/primeiro-pagante-mensal
+              metadata:
+                response-timeout: -1
+            - id: slow-api-v1-ultima-conexao-last-connections
+              uri: ${LEGACY_BFF_URL:http://bff-app:8085}
+              predicates:
+                - Method=GET
+                - Path=/api/v1/ultima-conexao/last-connections
+              metadata:
+                response-timeout: -1
+            - id: slow-api-v1-ultima-conexao-ultimas-conexoes
+              uri: ${LEGACY_BFF_URL:http://bff-app:8085}
+              predicates:
+                - Method=GET
+                - Path=/api/v1/ultima-conexao/ultimas-conexoes
+              metadata:
+                response-timeout: -1

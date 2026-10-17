@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: api-gateway
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
+          issuer-uri: https://accounts.google.com
+  cloud:
+    circuitbreaker:
+      resilience4j:
+        # O TimeLimiter do Resilience4j vem com 1 s por padrao e cortaria as rotas lentas. O limite de
+        # tempo e do cliente HTTP do gateway (response-timeout), nao do circuit breaker.
+        disable-time-limiter: true
+    gateway:
+      server:
+        webflux:
+          httpclient:
+            # Limite padrao de resposta: estourou, o gateway responde 504. Fica ABAIXO dos 90 s do proxy do
+            # stage para o erro vir do gateway. As rotas lentas (routes/slow-routes.yml) ignoram este limite.
+            response-timeout: ${GATEWAY_DEFAULT_RESPONSE_TIMEOUT:60s}
+            connect-timeout: 10000
+  config:
+    import:
+      - optional:classpath:routes/routes.yml
+      - optional:classpath:routes/slow-routes.yml
+
+server:
+  port: ${SERVER_PORT:8085}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
