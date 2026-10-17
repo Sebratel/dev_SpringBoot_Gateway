@@ -35,3 +35,14 @@ O manifesto é gerado pelo monólito (`RouteManifestTest`, em `dev_SpringBoot_AP
 
 ## Regras do repositório
 `main` só recebe PR com 1 aprovação e `ci-ok` verde; Conventional Commits; `.env` nunca vai para o Git.
+
+## Deploy em staging (Portainer)
+
+Stack criada **a partir do Git**: repositório `https://github.com/Sebratel/dev_SpringBoot_Gateway`, branch `staging`,
+arquivo `docker-compose-stage.yml`. O container se chama `api-gateway-stage` e fica na rede externa `proxy`.
+O gateway publica a porta **8087** do host (container `8085`).
+
+A imagem é construída pelo `Dockerfile` (multi-stage, Temurin 21, usuário não-root). O `sebratel-java-parent` é construído
+da fonte pública na própria imagem, então o build **não precisa de token**.
+
+O branch `staging` recebe o código mais atualizado: `main` → `staging` antes de cada deploy.

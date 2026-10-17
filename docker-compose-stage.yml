@@ -1,0 +1,37 @@
+# Stack de STAGING (Portainer, a partir do Git: branch staging).
+# Rede externa "proxy": a mesma do BFF atual; os serviços se enxergam pelo nome do container.
+services:
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api-gateway-stage
+    restart: unless-stopped
+    mem_limit: 512m
+    networks:
+      - proxy
+    ports:
+      - "8087:8085"
+    environment:
+      - SERVER_PORT=8085
+      - APP_ENV=staging
+      - TZ=America/Sao_Paulo
+      - MASSIVAS_URL=http://massivas-service-stage:8101
+      - SPLITTERS_URL=http://splitters-service-stage:8102
+      - COMERCIAL_URL=http://comercial-service-stage:8103
+      - RADIUS_URL=http://radius-service-stage:8104
+      - ESTOQUE_URL=http://estoque-service-stage:8105
+      - PESSOAS_URL=http://pessoas-service-stage:8106
+      # Monolito atual do stage (container do BFF). Ajustar se o nome mudar.
+      - LEGACY_BFF_URL=http://bff-java-service-stage:8085
+      - GATEWAY_DEFAULT_RESPONSE_TIMEOUT=60s
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8085'"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+networks:
+  proxy:
+    external: true
