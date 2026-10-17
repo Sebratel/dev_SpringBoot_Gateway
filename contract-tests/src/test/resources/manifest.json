@@ -1309,28 +1309,6 @@
   "body" : null
 }, {
   "method" : "GET",
-  "path" : "/api/v1/qr-code/gerar",
-  "service" : "pessoas",
-  "auth" : "authenticated",
-  "safe" : true,
-  "handler" : "QrCodeController#executar",
-  "pathVariables" : [ ],
-  "queryParams" : [ ],
-  "headers" : [ ],
-  "body" : "QrCodeInputDTO"
-}, {
-  "method" : "POST",
-  "path" : "/api/v1/qr-code/recuperar",
-  "service" : "pessoas",
-  "auth" : "authenticated",
-  "safe" : true,
-  "handler" : "QrCodeController#recuperarQrCode",
-  "pathVariables" : [ ],
-  "queryParams" : [ ],
-  "headers" : [ ],
-  "body" : "QrCodeInputDTO"
-}, {
-  "method" : "GET",
   "path" : "/api/v1/radius/duplicate-calling-stations",
   "service" : "radius",
   "auth" : "authenticated",

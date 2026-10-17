@@ -193,4 +193,4 @@ spring:
               uri: ${gateway.upstreams.pessoas}
               order: 10
               predicates:
-                - Path=/api/v1/employee/get-cpf-by-contract,/api/v1/employee/get-person-id-by-email,/api/v1/employee/get-person-name-by-cpf,/api/v1/employee/get-user-by-token,/api/v1/employee/is-corporativo,/api/v1/qr-code/gerar,/api/v1/qr-code/recuperar
+                - Path=/api/v1/employee/get-cpf-by-contract,/api/v1/employee/get-person-id-by-email,/api/v1/employee/get-person-name-by-cpf,/api/v1/employee/get-user-by-token,/api/v1/employee/is-corporativo

@@ -22,7 +22,7 @@ class ManifestSanityTest {
 
     @Test
     void hasAllRoutes() {
-        assertEquals(156, routes.size());
+        assertEquals(154, routes.size());
     }
 
     @Test
@@ -38,7 +38,7 @@ class ManifestSanityTest {
         Map<String, Long> perService = routes.stream()
                 .collect(Collectors.groupingBy(Route::service, Collectors.counting()));
         assertEquals(Map.of("massivas", 74L, "comercial", 45L, "radius", 14L,
-                "estoque", 8L, "splitters", 8L, "pessoas", 7L), perService);
+                "estoque", 8L, "splitters", 8L, "pessoas", 5L), perService);
     }
 
     @Test
@@ -65,12 +65,12 @@ class ManifestSanityTest {
     }
 
     @Test
-    void getRoutesWithBodyAreTheKnownFour() {
+    void getRoutesWithBodyAreTheKnownThree() {
         Set<String> getWithBody = routes.stream()
                 .filter(route -> "GET".equals(route.method()) && route.hasBody())
                 .map(Route::label).collect(Collectors.toSet());
-        assertEquals(Set.of("GET /api/v1/matrix", "GET /api/v1/qr-code/gerar",
-                "GET /api/v1/weekly-reports/vendedor", "GET /api/v1/apoio-semanal/vendedor"), getWithBody);
+        assertEquals(Set.of("GET /api/v1/matrix", "GET /api/v1/weekly-reports/vendedor",
+                "GET /api/v1/apoio-semanal/vendedor"), getWithBody);
     }
 
     @Test

@@ -57,13 +57,13 @@ class DeprecationHeadersFilterTest {
     }
 
     @Test
-    void theListHas136RoutesAndEveryOneExistsInTheManifest() throws IOException {
+    void theListHas134RoutesAndEveryOneExistsInTheManifest() throws IOException {
         Set<String> manifest = new HashSet<>();
         for (JsonNode route : new ObjectMapper().readTree(MANIFEST.toFile())) {
             manifest.add(route.get("method").asText() + " " + route.get("path").asText());
         }
 
-        assertEquals(136, routes.all().size());
+        assertEquals(134, routes.all().size());
         for (DeprecatedRoute route : routes.all()) {
             assertTrue(manifest.contains(route.key()), "rota obsoleta fora do manifesto: " + route.key());
         }

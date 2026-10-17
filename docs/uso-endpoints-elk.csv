@@ -115,8 +115,6 @@ requisicoes,servico,metodo,rota
 0,pessoas,GET,/api/v1/employee/get-cpf-by-contract
 0,pessoas,GET,/api/v1/employee/get-person-name-by-cpf
 0,pessoas,GET,/api/v1/employee/get-user-by-token
-0,pessoas,GET,/api/v1/qr-code/gerar
-0,pessoas,POST,/api/v1/qr-code/recuperar
 0,radius,GET,/api/v1/consumo
 0,radius,GET,/api/v1/consumo-alto
 0,radius,GET,/api/v1/consumo-alto-paginado

@@ -106,8 +106,6 @@ GET /api/v1/patrimonios/pendentes
 GET /api/v1/patrimonios/pending
 GET /api/v1/primeiro-pagante-mensal/first-monthly-payer
 GET /api/v1/primeiro-pagante-mensal/primeiro-pagante-mensal
-GET /api/v1/qr-code/gerar
-POST /api/v1/qr-code/recuperar
 GET /api/v1/radius/first-authentications
 GET /api/v1/relatorio-cliente-nome-duplicado/clientes-nomes-duplicados -> /api/v1/relatorios/clientes-nomes-duplicados
 GET /api/v1/relatorio-cliente-nome-duplicado/duplicate-client-names -> /api/v1/relatorios/clientes-nomes-duplicados
