@@ -40,7 +40,7 @@ O manifesto é gerado pelo monólito (`RouteManifestTest`, em `dev_SpringBoot_AP
 
 Stack criada **a partir do Git**: repositório `https://github.com/Sebratel/dev_SpringBoot_Gateway`, branch `staging`,
 arquivo `docker-compose-stage.yml`. O container se chama `api-gateway-stage` e fica na rede externa `proxy`.
-O gateway publica a porta **8087** do host (container `8085`).
+O gateway publica a porta **8094** do host (container `8085`).
 
 A imagem é construída pelo `Dockerfile` (multi-stage, Temurin 21, usuário não-root). O `sebratel-java-parent` é construído
 da fonte pública na própria imagem, então o build **não precisa de token**.
