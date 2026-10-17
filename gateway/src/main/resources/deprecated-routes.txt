@@ -1,0 +1,143 @@
+# Rotas sem nenhuma requisicao em staging (Kibana, 2026-08-19 a 2026-10-17; ver docs/USO-ENDPOINTS-ELK.md).
+# Recebem os headers Deprecation e Link (successor-version) e aparecem como "deprecated" no OpenAPI.
+# Nenhuma rota foi removida nem mudou de comportamento: e so um aviso aos consumidores.
+#
+# Formato:  METODO /rota/{variavel} [-> /rota/sucessora/{variavel}]
+# A sucessora e o alias do MESMO handler que recebeu trafego; as variaveis sao preenchidas pela chamada.
+# Fonte: docs/uso-endpoints-elk.csv. Um teste garante que esta lista e exatamente o conjunto de rotas com 0 requisicoes.
+GET /api/v1/acquisitions/recover-acquisition-orders
+GET /api/v1/acquisitions/recuperar-pedidos-de-aquisicao
+GET /api/v1/afetados
+GET /api/v1/afetados/pppoe/{pppoe}
+GET /api/v1/afetados/protocol/{protocol}
+GET /api/v1/apoio-semanal/vendedor
+GET /api/v1/aquisicoes/recover-acquisition-orders
+GET /api/v1/aquisicoes/recuperar-pedidos-de-aquisicao
+GET /api/v1/assets/pendentes
+GET /api/v1/assets/pending
+GET /api/v1/consumo
+GET /api/v1/consumo-alto
+GET /api/v1/consumo-alto-paginado
+GET /api/v1/contract-activations/report
+GET /api/v1/contract-payments/first-activation
+GET /api/v1/contracts/ativacao-pendente-fatura
+GET /api/v1/contracts/blocked
+GET /api/v1/contracts/bloqueados
+GET /api/v1/contracts/last-connections
+GET /api/v1/contracts/pending-activation-invoice
+GET /api/v1/contracts/sem-fatura
+GET /api/v1/contracts/ultimas-conexoes
+GET /api/v1/contracts/without-invoice
+GET /api/v1/contrato-ativacao-fatura/ativacao-pendente-fatura
+GET /api/v1/contrato-ativacao-fatura/pending-activation-invoice
+GET /api/v1/contrato-bloqueado/blocked
+GET /api/v1/contrato-bloqueado/bloqueados
+GET /api/v1/contrato-sem-fatura/sem-fatura
+GET /api/v1/contrato-sem-fatura/without-invoice
+GET /api/v1/contratos/ativacao-pendente-fatura
+GET /api/v1/contratos/blocked
+GET /api/v1/contratos/bloqueados
+GET /api/v1/contratos/last-connections
+GET /api/v1/contratos/pending-activation-invoice
+GET /api/v1/contratos/report
+GET /api/v1/contratos/sem-fatura
+GET /api/v1/contratos/ultimas-conexoes
+GET /api/v1/contratos/without-invoice
+GET /api/v1/employee/get-cpf-by-contract
+GET /api/v1/employee/get-person-name-by-cpf
+GET /api/v1/employee/get-user-by-token
+GET /api/v1/estoque/movimentacao
+POST /api/v1/estoque/tecnico
+DELETE /api/v1/gmud/finalizar-via-api -> /api/v1/gmud/encerrar-via-api
+POST /api/v1/gmud/open-via-api -> /api/v1/gmud/abrir-via-api
+POST /api/v1/gmud/report-via-api -> /api/v1/gmud/relato-via-api
+GET /api/v1/high-consumption
+GET /api/v1/high-consumption-paged
+GET /api/v1/impacted-users
+POST /api/v1/impacted-users -> /api/v1/afetados
+GET /api/v1/impacted-users/contract/{contractId} -> /api/v1/afetados/contract/{contractId}
+GET /api/v1/impacted-users/pppoe/{pppoe}
+DELETE /api/v1/impacted-users/protocol/{protocol} -> /api/v1/afetados/protocol/{protocol}
+GET /api/v1/impacted-users/protocol/{protocol}
+PATCH /api/v1/impacted-users/protocol/{protocol} -> /api/v1/afetados/protocol/{protocol}
+POST /api/v1/massivas
+POST /api/v1/massivas-eleven
+POST /api/v1/massivas-eleven/abrir-protocolo-infra-via-api -> /api/v1/massivas/abrir-protocolo-infra-via-api
+GET /api/v1/massivas-eleven/estimated-end/contract/{contractNumber}
+DELETE /api/v1/massivas-eleven/finalizar-chamado-via-api -> /api/v1/massivas/finalizar-chamado-via-api
+DELETE /api/v1/massivas-eleven/finalize-ticket-via-api -> /api/v1/massivas/finalizar-chamado-via-api
+GET /api/v1/massivas-eleven/getAllMassives
+POST /api/v1/massivas-eleven/open-infra-solicitation-via-api -> /api/v1/massivas/abrir-protocolo-infra-via-api
+GET /api/v1/massivas-eleven/previsao-finalizacao/contrato/{contractNumber}
+GET /api/v1/massivas-eleven/recover-via-database -> /api/v1/massivas/recuperar-pelo-banco
+GET /api/v1/massivas-eleven/recuperar-pelo-banco -> /api/v1/massivas/recuperar-pelo-banco
+POST /api/v1/massivas-eleven/salvar-massiva-via-api -> /api/v1/massivas/salvar-massiva-via-api
+POST /api/v1/massivas-eleven/save-massive-via-api -> /api/v1/massivas/salvar-massiva-via-api
+GET /api/v1/massivas-history/recover-via-database
+GET /api/v1/massivas-history/recuperar-pelo-banco
+PATCH /api/v1/massivas-history/{protocol}/encerrar
+PATCH /api/v1/massivas-history/{protocol}/finalize
+GET /api/v1/massivas-splitters/recover-via-database
+GET /api/v1/massivas-splitters/recuperar-pelo-banco
+PATCH /api/v1/massivas-splitters/{protocol}/encerrar
+PATCH /api/v1/massivas-splitters/{protocol}/finalize
+GET /api/v1/massivas/estimated-end/contract/{contractNumber}
+DELETE /api/v1/massivas/finalize-ticket-via-api -> /api/v1/massivas/finalizar-chamado-via-api
+GET /api/v1/massivas/getAllMassives
+POST /api/v1/massivas/open-infra-solicitation-via-api -> /api/v1/massivas/abrir-protocolo-infra-via-api
+GET /api/v1/massivas/previsao-finalizacao/contrato/{contractNumber}
+GET /api/v1/massivas/recover-via-database -> /api/v1/massivas/recuperar-pelo-banco
+POST /api/v1/massivas/save-massive-via-api -> /api/v1/massivas/salvar-massiva-via-api
+POST /api/v1/massive-incidents
+POST /api/v1/massive-incidents/abrir-protocolo-infra-via-api -> /api/v1/massivas/abrir-protocolo-infra-via-api
+GET /api/v1/massive-incidents/estimated-end/contract/{contractNumber}
+DELETE /api/v1/massive-incidents/finalizar-chamado-via-api -> /api/v1/massivas/finalizar-chamado-via-api
+DELETE /api/v1/massive-incidents/finalize-ticket-via-api -> /api/v1/massivas/finalizar-chamado-via-api
+GET /api/v1/massive-incidents/getAllMassives
+POST /api/v1/massive-incidents/open-infra-solicitation-via-api -> /api/v1/massivas/abrir-protocolo-infra-via-api
+GET /api/v1/massive-incidents/previsao-finalizacao/contrato/{contractNumber}
+GET /api/v1/massive-incidents/recover-via-database -> /api/v1/massivas/recuperar-pelo-banco
+GET /api/v1/massive-incidents/recuperar-pelo-banco -> /api/v1/massivas/recuperar-pelo-banco
+POST /api/v1/massive-incidents/salvar-massiva-via-api -> /api/v1/massivas/salvar-massiva-via-api
+POST /api/v1/massive-incidents/save-massive-via-api -> /api/v1/massivas/salvar-massiva-via-api
+GET /api/v1/patrimonio-pendente/pendentes
+GET /api/v1/patrimonio-pendente/pending
+GET /api/v1/patrimonios/pendentes
+GET /api/v1/patrimonios/pending
+GET /api/v1/primeiro-pagante-mensal/first-monthly-payer
+GET /api/v1/primeiro-pagante-mensal/primeiro-pagante-mensal
+GET /api/v1/qr-code/gerar
+POST /api/v1/qr-code/recuperar
+GET /api/v1/radius/first-authentications
+GET /api/v1/relatorio-cliente-nome-duplicado/clientes-nomes-duplicados -> /api/v1/relatorios/clientes-nomes-duplicados
+GET /api/v1/relatorio-cliente-nome-duplicado/duplicate-client-names -> /api/v1/relatorios/clientes-nomes-duplicados
+GET /api/v1/relatorios/duplicate-client-names -> /api/v1/relatorios/clientes-nomes-duplicados
+GET /api/v1/relatorios/first-monthly-payer
+GET /api/v1/relatorios/primeiro-pagante-mensal
+GET /api/v1/reports/clientes-nomes-duplicados -> /api/v1/relatorios/clientes-nomes-duplicados
+GET /api/v1/reports/duplicate-client-names -> /api/v1/relatorios/clientes-nomes-duplicados
+GET /api/v1/reports/first-monthly-payer
+GET /api/v1/reports/primeiro-pagante-mensal
+GET /api/v1/sellers/active
+GET /api/v1/sellers/ativos
+GET /api/v1/sellers/vendedores-ativos
+GET /api/v1/sites
+GET /api/v1/splitters/listarConnections
+GET /api/v1/splitters/listarOlts
+GET /api/v1/splitters/listarSplitters
+GET /api/v1/splitters/listarSplitters-paginado
+GET /api/v1/splitters/recuperarToken
+GET /api/v1/splitters/{splitterId}
+GET /api/v1/ultima-conexao/last-connections
+GET /api/v1/ultima-conexao/ultimas-conexoes
+GET /api/v1/usuario-afetado
+POST /api/v1/usuario-afetado -> /api/v1/afetados
+GET /api/v1/usuario-afetado/contract/{contractId} -> /api/v1/afetados/contract/{contractId}
+GET /api/v1/usuario-afetado/pppoe/{pppoe}
+DELETE /api/v1/usuario-afetado/protocol/{protocol} -> /api/v1/afetados/protocol/{protocol}
+GET /api/v1/usuario-afetado/protocol/{protocol}
+PATCH /api/v1/usuario-afetado/protocol/{protocol} -> /api/v1/afetados/protocol/{protocol}
+GET /api/v1/vendedores/active
+GET /api/v1/vendedores/ativos
+GET /api/v1/vendedores/vendedores-ativos
+GET /api/v1/weekly-reports/vendedor

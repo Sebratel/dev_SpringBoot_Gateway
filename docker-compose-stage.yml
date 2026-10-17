@@ -25,6 +25,12 @@ services:
       # Monolito atual do stage (container do BFF). Ajustar se o nome mudar.
       - LEGACY_BFF_URL=http://bff-java-service-stage:8085
       - GATEWAY_DEFAULT_RESPONSE_TIMEOUT=60s
+      # Autenticacao (so o gateway autentica). Basic legado: as mesmas SECURITY_USER/SECURITY_PASS do BFF original.
+      - SECURITY_USER=${SECURITY_USER:-}
+      - SECURITY_PASS=${SECURITY_PASS:-}
+      - ALLOWED_EMAIL_DOMAIN=${ALLOWED_EMAIL_DOMAIN:-@sebratel.com.br}
+      - DEPRECATION_SINCE=${DEPRECATION_SINCE:-2026-10-17}
+      - DEPRECATION_SUNSET=${DEPRECATION_SUNSET:-2027-01-17}
     healthcheck:
       test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8085'"]
       interval: 30s

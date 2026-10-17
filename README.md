@@ -3,15 +3,35 @@
 API Gateway da Sebratel (Spring Cloud Gateway, WebFlux) e o módulo `contract-tests`, que garante que as **156 rotas** do BFF
 continuam idênticas atrás do gateway. Parte da migração descrita em `Sebratel/dev_SpringBoot_APIGateway` (`specs/API_GATEWAY.md`).
 
-> **Estado: esqueleto.** O gateway sobe, valida o JWT do Google e tem a política de tempo definida, mas **ainda não roteia o
-> tráfego**: só as 18 rotas lentas estão declaradas (apontando ao monólito). As demais rotas são geradas a partir do manifesto
-> nas fases 2 e 3 da migração.
+> **Estado:** o gateway **autentica**, repassa a identidade, roteia as 156 rotas para os 6 serviços e aplica a política de tempo.
+> Os serviços não têm segurança: recebem só os dados do usuário (`X-User-*`).
 
 ## Módulos
 | Módulo | O que é |
 |---|---|
 | `gateway` | `api-gateway` (porta 8085): autenticação, CORS, resiliência, rotas. **Sem lógica de domínio e sem banco** |
 | `contract-tests` | Manifesto das rotas, testes de sanidade e testes de paridade por serviço, rodando contra qualquer URL base |
+
+## Premissas de um API Gateway: onde estamos
+
+| Premissa | Estado |
+|---|---|
+| Autenticação centralizada | **Feito.** JWT do Google (emissor + e-mail `@sebratel.com.br`) e Basic legado (`SECURITY_USER`/`SECURITY_PASS`, só se definidos); rotas públicas explícitas (`GET /api/v1/matrix`, `GET /api/v1/afetados/contract/**`, health) |
+| Propagação de identidade | **Feito.** `X-User-Email`, `X-User-Name` (URL-encoded), `X-User-Id`, `X-Auth-Method`. Qualquer `X-User-*`/`X-Auth-*` vindo de fora é descartado (ninguém se passa por outro usuário) e o `Authorization` **não** chega ao serviço |
+| Serviços sem credencial | **Feito.** Spring Security removido dos 6 serviços; só se alcançam pela rede interna (sem porta publicada) |
+| Roteamento por serviço | **Feito.** 156 rotas, conferidas contra o manifesto (`RouteCoverageTest`) |
+| Limite de tempo | **Feito.** 60 s (504); 18 rotas lentas sem limite |
+| CORS central | **Feito.** Respondido no gateway (preflight antes da autenticação); expõe `Deprecation`, `Sunset`, `Link`, `X-Request-Id` |
+| Correlação e log de acesso | **Feito.** `X-Request-Id` (do cliente ou gerado) vai ao serviço e volta; linha `ACCESS` por requisição (rota, status, ms, usuário) |
+| Ciclo de vida da API | **Feito.** 136 rotas sem uso marcadas com `Deprecation`/`Sunset`/`Link` (`deprecated-routes.txt`) |
+| Autorização por rota (papéis) | **Pendente.** Hoje só autentica (domínio do e-mail); não há papéis |
+| Rate limiting | **Pendente.** O `RequestRateLimiter` do Spring Cloud Gateway precisa de Redis; decidir limite por usuário/IP |
+| Circuit breaker e retry | **Pendente.** O Resilience4j está no classpath, mas nenhuma rota usa; retry só faz sentido em `GET` idempotente |
+| Saúde agregada | **Parcial.** Health do gateway; não consulta os serviços |
+| Agregação do OpenAPI | **Pendente.** Cada serviço publica o seu; o gateway não junta |
+| Métricas e tracing | **Parcial.** Actuator/metrics; sem Prometheus nem OpenTelemetry |
+| Limite de tamanho de corpo | **Pendente** |
+| TLS | No NPM (fora deste repositório) |
 
 ## Política de tempo
 - Limite padrão de resposta de **60 s** (`GATEWAY_DEFAULT_RESPONSE_TIMEOUT`): estourou, o gateway responde **504**.

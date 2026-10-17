@@ -25,6 +25,19 @@ spring:
     import:
       - optional:classpath:routes/routes.yml
 
+gateway:
+  security:
+    allowed-email-domain: ${ALLOWED_EMAIL_DOMAIN:@sebratel.com.br}
+    # HTTP Basic legado (paridade com o BFF original: scripts e n8n). Sem as duas variaveis, nao ha usuario Basic.
+    basic:
+      user: ${SECURITY_USER:}
+      password: ${SECURITY_PASS:}
+
+# Deprecacao de rotas sem uso (deprecated-routes.txt): header Deprecation (RFC 9745) e Sunset (RFC 8594).
+deprecation:
+  since: ${DEPRECATION_SINCE:2026-10-17}
+  sunset: ${DEPRECATION_SUNSET:2027-01-17}
+
 server:
   port: ${SERVER_PORT:8085}
 
