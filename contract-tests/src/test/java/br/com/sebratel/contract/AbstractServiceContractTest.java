@@ -19,6 +19,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Contrato HTTP das rotas de UM servico de destino, contra uma URL base (o monolito hoje, o gateway depois).
@@ -107,7 +108,8 @@ abstract class AbstractServiceContractTest {
         }
         Optional<Golden> expected = goldens.read(route);
         if (expected.isPresent()) {
-            assertEquals(expected.get(), actual, "resposta divergente do golden file");
+            assertTrue(expected.get().sameContractAs(actual),
+                    "resposta divergente do golden file ==> expected: " + expected.get() + " but was: " + actual);
         }
     }
 
