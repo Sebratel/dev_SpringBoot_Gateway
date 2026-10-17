@@ -20,7 +20,7 @@ continuam idênticas atrás do gateway. Parte da migração descrita em `Sebrate
 - Isso só vale atrás do gateway: o proxy do stage corta em ~90 s e precisa de `proxy_read_timeout` maior nessas rotas.
 
 ## Desenvolvimento
-O `sebratel-parent` vem do GitHub Packages (privado); crie um servidor `github` no `~/.m2/settings.xml` com token `read:packages`.
+O `sebratel-java-parent` vem do GitHub Packages (o Maven exige token `read:packages` até para pacotes públicos); crie um servidor `github` no `~/.m2/settings.xml` com token `read:packages`.
 
 ```bash
 ./mvnw verify

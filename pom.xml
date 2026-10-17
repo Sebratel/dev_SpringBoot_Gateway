@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>br.com.sebratel</groupId>
-        <artifactId>sebratel-parent</artifactId>
+        <artifactId>sebratel-java-parent</artifactId>
         <version>1.0.0</version>
         <relativePath/>
     </parent>
@@ -15,19 +15,19 @@
     <description>API Gateway da Sebratel (roteamento, autenticação, resiliência) e testes de paridade de contrato</description>
 
     <!--
-      O sebratel-parent e o sebratel-build-rules (plugin do Checkstyle) vem do GitHub Packages (privado).
+      O sebratel-java-parent e o sebratel-build-rules (plugin do Checkstyle) vem do GitHub Packages (o Maven exige token `read:packages` até para pacotes públicos).
       Exige <server><id>github</id> no ~/.m2/settings.xml com token read:packages. Ver README.
     -->
     <repositories>
         <repository>
             <id>github</id>
-            <url>https://maven.pkg.github.com/Sebratel/dev_Maven_Parent</url>
+            <url>https://maven.pkg.github.com/Sebratel/dev_Maven_JavaParent</url>
         </repository>
     </repositories>
     <pluginRepositories>
         <pluginRepository>
             <id>github</id>
-            <url>https://maven.pkg.github.com/Sebratel/dev_Maven_Parent</url>
+            <url>https://maven.pkg.github.com/Sebratel/dev_Maven_JavaParent</url>
         </pluginRepository>
     </pluginRepositories>
 
