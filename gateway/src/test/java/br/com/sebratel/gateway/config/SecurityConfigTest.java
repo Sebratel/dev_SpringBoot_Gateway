@@ -13,7 +13,8 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
  * (que nao existe no teste) e voltam 5xx: o que importa aqui e que NAO sao 401.
  */
 @SpringBootTest(properties = {"gateway.security.basic.user=n8n", "gateway.security.basic.password=segredo-de-teste",
-        "management.prometheus.metrics.export.enabled=true"})
+        "management.prometheus.metrics.export.enabled=true",
+        "management.server.port="})
 @AutoConfigureWebTestClient
 class SecurityConfigTest {
 
