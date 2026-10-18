@@ -1,14 +1,17 @@
 package br.com.sebratel.gateway.health;
 
+import io.netty.resolver.DefaultAddressResolverGroup;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 import org.springframework.boot.context.properties.bind.Bindable;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.core.env.Environment;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.netty.http.client.HttpClient;
 
 import java.time.Duration;
 import java.util.LinkedHashMap;
@@ -28,7 +31,9 @@ public class ServicesEndpoint {
     private static final Duration TIMEOUT = Duration.ofSeconds(2);
 
     private final Map<String, String> upstreams;
-    private final WebClient client = WebClient.create();
+    private final WebClient client = WebClient.builder()
+            .clientConnector(new ReactorClientHttpConnector(HttpClient.create().resolver(DefaultAddressResolverGroup.INSTANCE)))
+            .build();
 
     public ServicesEndpoint(Environment environment) {
         this.upstreams = new TreeMap<>(Binder.get(environment)
