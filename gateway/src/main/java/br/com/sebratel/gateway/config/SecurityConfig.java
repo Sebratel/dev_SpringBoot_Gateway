@@ -20,6 +20,7 @@ import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.ServerAuthenticationEntryPoint;
 import org.springframework.security.web.server.header.ReferrerPolicyServerHttpHeadersWriter;
+import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
@@ -53,6 +54,24 @@ public class SecurityConfig {
     @Value("${gateway.security.allowed-email-domain:@sebratel.com.br}")
     private String allowedEmailDomain;
 
+    @Value("${management.server.port:}")
+    private String managementPort;
+
+    /** Casa as requisicoes que chegaram pela porta do actuator; sem porta propria configurada, nao casa nenhuma. */
+    static ServerWebExchangeMatcher managementPortMatcher(String configuredPort) {
+        return exchange -> {
+            int port;
+            try {
+                port = Integer.parseInt(configuredPort == null ? "" : configuredPort.trim());
+            } catch (NumberFormatException e) {
+                port = -1;
+            }
+            var local = exchange.getRequest().getLocalAddress();
+            return port > 0 && local != null && local.getPort() == port
+                    ? ServerWebExchangeMatcher.MatchResult.match() : ServerWebExchangeMatcher.MatchResult.notMatch();
+        };
+    }
+
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http
@@ -64,6 +83,9 @@ public class SecurityConfig {
                         .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyServerHttpHeadersWriter.ReferrerPolicy.NO_REFERRER))
                         .permissionsPolicy(permissions -> permissions.policy("geolocation=(), microphone=(), camera=()")))
                 .authorizeExchange(exchange -> exchange
+                        // Porta do actuator (8086): nao e publicada e o nginx nunca chega nela; so a rede privada
+                        // (Prometheus) a enxerga. Metricas e saude agregada nao pedem credencial ali.
+                        .matchers(managementPortMatcher(managementPort)).permitAll()
                         .pathMatchers(HttpMethod.OPTIONS).permitAll()
                         .pathMatchers("/actuator/health", "/actuator/health/**").permitAll()
                         .pathMatchers("/error").permitAll()
