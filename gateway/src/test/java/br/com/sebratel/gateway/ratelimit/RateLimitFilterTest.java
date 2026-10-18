@@ -65,6 +65,24 @@ class RateLimitFilterTest {
     }
 
     @Test
+    void aConsumerWithItsOwnLimitOverridesTheDefault() {
+        RateLimitFilter filter = new RateLimitFilter(true, 1000, 1000, 100);
+        br.com.sebratel.gateway.consumer.Consumer slow = new br.com.sebratel.gateway.consumer.Consumer("lento", "lento",
+                "{noop}x", "", 1, 1, java.util.List.of(), true, null);
+
+        MockServerWebExchange first = MockServerWebExchange.from(MockServerHttpRequest.get("/api/v1/matrix").build());
+        first.getAttributes().put(br.com.sebratel.gateway.consumer.ConsumerContextFilter.CONSUMER_ATTRIBUTE, slow);
+        filter.filter(first, chain).block();
+        MockServerWebExchange second = MockServerWebExchange.from(MockServerHttpRequest.get("/api/v1/matrix").build());
+        second.getAttributes().put(br.com.sebratel.gateway.consumer.ConsumerContextFilter.CONSUMER_ATTRIBUTE, slow);
+        filter.filter(second, chain).block();
+
+        assertNull(first.getResponse().getStatusCode());
+        assertEquals(HttpStatus.TOO_MANY_REQUESTS, second.getResponse().getStatusCode());
+        assertEquals("1.0", second.getResponse().getHeaders().getFirst("X-RateLimit-Limit"));
+    }
+
+    @Test
     void doesNothingWhenDisabled() {
         RateLimitFilter filter = new RateLimitFilter(false, 1, 1, 100);
 

@@ -53,7 +53,8 @@ public class IdentityHeadersFilter implements GlobalFilter, Ordered {
     private static void apply(HttpHeaders headers, Identity identity) {
         headers.keySet().removeIf(name -> {
             String lower = name.toLowerCase();
-            return lower.startsWith("x-user-") || lower.startsWith("x-auth-") || lower.equals("authorization");
+            return lower.startsWith("x-user-") || lower.startsWith("x-auth-") || lower.equals("authorization")
+                    || lower.equals("x-consumer");
         });
         headers.set(METHOD, identity.method());
         if (!identity.email().isEmpty()) {

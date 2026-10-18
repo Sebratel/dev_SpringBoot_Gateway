@@ -1,0 +1,237 @@
+# Monitoramento do API Gateway e dos 6 servicos (stack propria no Portainer, a partir do Git: monitoring/docker-compose-monitoring.yml).
+#   - Prometheus coleta a cada 15 s: cada instancia do gateway (porta 8086, via DNS, entra/sai sozinha) e os 6 servicos.
+#   - Regras de alerta em "prometheus_alerts" (aparecem na aba Alerts do Prometheus e no Grafana).
+#   - Grafana ja sobe com a fonte de dados e o painel "API Gateway" (nada a configurar). Primeiro acesso: admin / admin
+#     (o Grafana pede para trocar a senha). Porta 3001.
+# O Prometheus entra na rede privada "gateway-backend" (a mesma do gateway; crie/redeploye a stack do gateway antes).
+# Em "content", cada cifrao aparece como $$ (o Compose le o $ como variavel).
+services:
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: api-gateway-prometheus
+    restart: unless-stopped
+    mem_limit: 512m
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=30d
+      - --web.enable-lifecycle
+    networks:
+      - backend      # enxerga o gateway (8086) e os servicos
+      - monitoring   # o Grafana consulta por aqui
+    volumes:
+      - prometheus-data:/prometheus
+    configs:
+      - source: prometheus_yml
+        target: /etc/prometheus/prometheus.yml
+      - source: prometheus_alerts
+        target: /etc/prometheus/alerts.yml
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: api-gateway-grafana
+    restart: unless-stopped
+    mem_limit: 256m
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_ANALYTICS_CHECK_FOR_UPDATES=false
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/api-gateway.json
+      - TZ=America/Sao_Paulo
+    volumes:
+      - grafana-data:/var/lib/grafana
+    configs:
+      - source: grafana_datasource
+        target: /etc/grafana/provisioning/datasources/prometheus.yml
+      - source: grafana_dashboards_provider
+        target: /etc/grafana/provisioning/dashboards/provider.yml
+      - source: grafana_dashboard_gateway
+        target: /var/lib/grafana/dashboards/api-gateway.json
+
+configs:
+  prometheus_yml:
+    content: |
+      global:
+        scrape_interval: 15s
+        evaluation_interval: 15s
+      rule_files:
+        - /etc/prometheus/alerts.yml
+      scrape_configs:
+        - job_name: prometheus
+          static_configs:
+            - targets: ['localhost:9090']
+        # Cada instancia do gateway: o DNS "api-gateway" devolve todas; a lista se renova a cada 15 s.
+        - job_name: gateway
+          metrics_path: /actuator/prometheus
+          dns_sd_configs:
+            - names: ['api-gateway']
+              type: A
+              port: 8086
+              refresh_interval: 15s
+        - job_name: services
+          metrics_path: /actuator/prometheus
+          static_configs:
+            - {targets: ['massivas-service-stage:8101'], labels: {service: massivas}}
+            - {targets: ['splitters-service-stage:8102'], labels: {service: splitters}}
+            - {targets: ['comercial-service-stage:8103'], labels: {service: comercial}}
+            - {targets: ['radius-service-stage:8104'], labels: {service: radius}}
+            - {targets: ['estoque-service-stage:8105'], labels: {service: estoque}}
+            - {targets: ['pessoas-service-stage:8106'], labels: {service: pessoas}}
+
+  prometheus_alerts:
+    content: |
+      groups:
+        - name: api-gateway
+          rules:
+            - alert: GatewayForaDoAr
+              expr: count(up{job="gateway"} == 1) == 0 or absent(up{job="gateway"})
+              for: 1m
+              labels: {severity: critical}
+              annotations:
+                summary: "Nenhuma instancia do API Gateway responde"
+            - alert: GatewayComMenosInstancias
+              expr: count(up{job="gateway"} == 1) < 2
+              for: 2m
+              labels: {severity: warning}
+              annotations:
+                summary: "O gateway tem menos de 2 instancias no ar ($${{ $$value }})"
+            - alert: ServicoForaDoAr
+              expr: up{job="services"} == 0
+              for: 1m
+              labels: {severity: critical}
+              annotations:
+                summary: "Servico {{ $$labels.service }} nao responde ao Prometheus"
+            - alert: TaxaDeErro5xxAlta
+              expr: |
+                sum(rate(gateway_consumer_requests_total{status="5xx"}[5m]))
+                  / sum(rate(gateway_consumer_requests_total[5m])) > 0.05
+                and sum(rate(gateway_consumer_requests_total[5m])) > 0.1
+              for: 5m
+              labels: {severity: warning}
+              annotations:
+                summary: "Mais de 5% das respostas do gateway sao 5xx"
+            - alert: LatenciaP95Alta
+              expr: |
+                histogram_quantile(0.95, sum by (le, routeId) (rate(spring_cloud_gateway_requests_seconds_bucket{routeId!~"slow-.*"}[5m]))) > 10
+              for: 10m
+              labels: {severity: warning}
+              annotations:
+                summary: "p95 acima de 10 s na rota {{ $$labels.routeId }}"
+            - alert: ConsumidorRecebendo403Ou429
+              expr: sum by (consumer) (rate(gateway_consumer_requests_total{status="4xx"}[5m])) > 1
+              for: 10m
+              labels: {severity: info}
+              annotations:
+                summary: "O consumidor {{ $$labels.consumer }} esta recebendo muitas respostas 4xx (limite, permissao ou credencial)"
+            - alert: HeapAlta
+              expr: |
+                sum by (application, instance) (jvm_memory_used_bytes{area="heap"})
+                  / sum by (application, instance) (jvm_memory_max_bytes{area="heap"}) > 0.85
+              for: 10m
+              labels: {severity: warning}
+              annotations:
+                summary: "Heap acima de 85% em {{ $$labels.application }} ({{ $$labels.instance }})"
+
+  grafana_datasource:
+    content: |
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          uid: prometheus
+          type: prometheus
+          access: proxy
+          url: http://prometheus:9090
+          isDefault: true
+
+  grafana_dashboards_provider:
+    content: |
+      apiVersion: 1
+      providers:
+        - name: api-gateway
+          folder: API Gateway
+          type: file
+          allowUiUpdates: true
+          options:
+            path: /var/lib/grafana/dashboards
+
+  grafana_dashboard_gateway:
+    content: |
+      {
+        "uid": "api-gateway",
+        "title": "API Gateway",
+        "tags": ["gateway"],
+        "timezone": "browser",
+        "schemaVersion": 39,
+        "refresh": "30s",
+        "time": {"from": "now-6h", "to": "now"},
+        "panels": [
+          {"id": 1, "type": "stat", "title": "Instancias do gateway no ar", "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0},
+           "datasource": {"type": "prometheus", "uid": "prometheus"},
+           "targets": [{"expr": "count(up{job=\"gateway\"} == 1) or vector(0)", "refId": "A"}],
+           "fieldConfig": {"defaults": {"thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "yellow", "value": 1}, {"color": "green", "value": 2}]}}}},
+          {"id": 2, "type": "stat", "title": "Servicos no ar (de 6)", "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0},
+           "datasource": {"type": "prometheus", "uid": "prometheus"},
+           "targets": [{"expr": "count(up{job=\"services\"} == 1) or vector(0)", "refId": "A"}],
+           "fieldConfig": {"defaults": {"thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "yellow", "value": 5}, {"color": "green", "value": 6}]}}}},
+          {"id": 3, "type": "stat", "title": "Requisicoes por segundo", "gridPos": {"h": 4, "w": 4, "x": 8, "y": 0},
+           "datasource": {"type": "prometheus", "uid": "prometheus"},
+           "targets": [{"expr": "sum(rate(gateway_consumer_requests_total[1m]))", "refId": "A"}],
+           "fieldConfig": {"defaults": {"unit": "reqps", "decimals": 2}}},
+          {"id": 4, "type": "stat", "title": "Erros 5xx (5 min)", "gridPos": {"h": 4, "w": 4, "x": 12, "y": 0},
+           "datasource": {"type": "prometheus", "uid": "prometheus"},
+           "targets": [{"expr": "sum(rate(gateway_consumer_requests_total{status=\"5xx\"}[5m])) / sum(rate(gateway_consumer_requests_total[5m]))", "refId": "A"}],
+           "fieldConfig": {"defaults": {"unit": "percentunit", "decimals": 2, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 0.01}, {"color": "red", "value": 0.05}]}}}},
+          {"id": 5, "type": "timeseries", "title": "Requisicoes por segundo, por consumidor", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+           "datasource": {"type": "prometheus", "uid": "prometheus"},
+           "targets": [{"expr": "sum by (consumer) (rate(gateway_consumer_requests_total[1m]))", "legendFormat": "{{consumer}}", "refId": "A"}],
+           "fieldConfig": {"defaults": {"unit": "reqps"}}},
+          {"id": 6, "type": "timeseries", "title": "Respostas por classe de status", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+           "datasource": {"type": "prometheus", "uid": "prometheus"},
+           "targets": [{"expr": "sum by (status) (rate(gateway_consumer_requests_total[1m]))", "legendFormat": "{{status}}", "refId": "A"}],
+           "fieldConfig": {"defaults": {"unit": "reqps"}}},
+          {"id": 7, "type": "timeseries", "title": "Latencia p95 por rota (sem as lentas conhecidas)", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+           "datasource": {"type": "prometheus", "uid": "prometheus"},
+           "targets": [{"expr": "histogram_quantile(0.95, sum by (le, routeId) (rate(spring_cloud_gateway_requests_seconds_bucket{routeId!~\"slow-.*\"}[5m])))", "legendFormat": "{{routeId}}", "refId": "A"}],
+           "fieldConfig": {"defaults": {"unit": "s"}}},
+          {"id": 8, "type": "timeseries", "title": "Requisicoes por segundo, por servico de destino", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+           "datasource": {"type": "prometheus", "uid": "prometheus"},
+           "targets": [{"expr": "sum by (routeId) (rate(spring_cloud_gateway_requests_seconds_count[1m]))", "legendFormat": "{{routeId}}", "refId": "A"}],
+           "fieldConfig": {"defaults": {"unit": "reqps"}}},
+          {"id": 9, "type": "timeseries", "title": "Requisicoes por instancia do gateway (balanceamento)", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
+           "datasource": {"type": "prometheus", "uid": "prometheus"},
+           "targets": [{"expr": "sum by (instance) (rate(gateway_consumer_requests_total[1m]))", "legendFormat": "{{instance}}", "refId": "A"}],
+           "fieldConfig": {"defaults": {"unit": "reqps"}}},
+          {"id": 10, "type": "timeseries", "title": "Circuit breaker (1 = aberto)", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20},
+           "datasource": {"type": "prometheus", "uid": "prometheus"},
+           "targets": [{"expr": "max by (name) (resilience4j_circuitbreaker_state{state=\"open\"})", "legendFormat": "{{name}}", "refId": "A"}]},
+          {"id": 11, "type": "timeseries", "title": "Latencia p95 dos servicos", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 28},
+           "datasource": {"type": "prometheus", "uid": "prometheus"},
+           "targets": [{"expr": "histogram_quantile(0.95, sum by (le, application) (rate(http_server_requests_seconds_bucket{application=~\".*-service\"}[5m])))", "legendFormat": "{{application}}", "refId": "A"}],
+           "fieldConfig": {"defaults": {"unit": "s"}}},
+          {"id": 12, "type": "timeseries", "title": "Heap em uso (%) - gateway e servicos", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 28},
+           "datasource": {"type": "prometheus", "uid": "prometheus"},
+           "targets": [{"expr": "sum by (application, instance) (jvm_memory_used_bytes{area=\"heap\"}) / sum by (application, instance) (jvm_memory_max_bytes{area=\"heap\"})", "legendFormat": "{{application}} {{instance}}", "refId": "A"}],
+           "fieldConfig": {"defaults": {"unit": "percentunit", "min": 0, "max": 1}}},
+          {"id": 13, "type": "timeseries", "title": "CPU (%)", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 36},
+           "datasource": {"type": "prometheus", "uid": "prometheus"},
+           "targets": [{"expr": "process_cpu_usage", "legendFormat": "{{application}} {{instance}}", "refId": "A"}],
+           "fieldConfig": {"defaults": {"unit": "percentunit", "min": 0}}}
+        ]
+      }
+
+volumes:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  backend:
+    name: gateway-backend
+    external: true   # criada pela stack do gateway
+  monitoring: {}

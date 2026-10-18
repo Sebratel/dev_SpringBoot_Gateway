@@ -1,5 +1,7 @@
 package br.com.sebratel.gateway.ratelimit;
 
+import br.com.sebratel.gateway.consumer.Consumer;
+import br.com.sebratel.gateway.consumer.ConsumerContextFilter;
 import br.com.sebratel.gateway.identity.IdentityHeadersFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -18,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Limite de taxa por consumidor (balde de fichas, em memoria: o gateway roda em uma instancia; com mais de uma o
- * limite vale por instancia). A chave e o usuario autenticado (e-mail ou usuario Basic) e, na falta dele, o IP.
+ * limite vale por instancia). A chave e o consumidor (cadastro de consumidores, com limite proprio opcional), o usuario JWT (e-mail) ou, na falta deles, o IP.
  *
  * <p>Estourou: {@code 429} com {@code Retry-After}. Valores em {@code gateway.rate-limit.*}.
  */
@@ -50,30 +52,36 @@ public class RateLimitFilter implements GlobalFilter, Ordered {
             return chain.filter(exchange);
         }
         long now = System.nanoTime();
-        Bucket bucket = buckets.computeIfAbsent(keyOf(exchange), key -> new Bucket(burst, now));
-        long waitSeconds = bucket.tryAcquire(now, refillPerSecond, burst);
+        Consumer consumer = exchange.getAttribute(ConsumerContextFilter.CONSUMER_ATTRIBUTE);
+        double rate = consumer != null && consumer.requestsPerSecond() > 0 ? consumer.requestsPerSecond() : refillPerSecond;
+        int capacity = consumer != null && consumer.burst() > 0 ? consumer.burst() : burst;
+        Bucket bucket = buckets.computeIfAbsent(keyOf(exchange, consumer), key -> new Bucket(capacity, now));
+        long waitSeconds = bucket.tryAcquire(now, rate, capacity);
         if (buckets.size() > maxKeys) {
             buckets.entrySet().removeIf(entry -> now - entry.getValue().lastSeen() > IDLE_NANOS);
         }
         if (waitSeconds == 0) {
             return chain.filter(exchange);
         }
-        return tooManyRequests(exchange, waitSeconds);
+        return tooManyRequests(exchange, waitSeconds, rate);
     }
 
-    private Mono<Void> tooManyRequests(ServerWebExchange exchange, long waitSeconds) {
+    private Mono<Void> tooManyRequests(ServerWebExchange exchange, long waitSeconds, double rate) {
         var response = exchange.getResponse();
         response.setStatusCode(HttpStatus.TOO_MANY_REQUESTS);
         response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
         response.getHeaders().set("Retry-After", Long.toString(waitSeconds));
-        response.getHeaders().set("X-RateLimit-Limit", Double.toString(refillPerSecond));
+        response.getHeaders().set("X-RateLimit-Limit", Double.toString(rate));
         DataBuffer body = response.bufferFactory().wrap(
                 ("{\"status\":429,\"error\":\"Too Many Requests\",\"message\":\"Limite de requisicoes excedido. Tente novamente em "
                         + waitSeconds + " s.\"}").getBytes(StandardCharsets.UTF_8));
         return response.writeWith(Mono.just(body));
     }
 
-    private static String keyOf(ServerWebExchange exchange) {
+    private static String keyOf(ServerWebExchange exchange, Consumer consumer) {
+        if (consumer != null) {
+            return "c:" + consumer.name();
+        }
         Object user = exchange.getAttribute(IdentityHeadersFilter.USER_ATTRIBUTE);
         if (user != null && !"-".equals(user.toString())) {
             return "u:" + user;
