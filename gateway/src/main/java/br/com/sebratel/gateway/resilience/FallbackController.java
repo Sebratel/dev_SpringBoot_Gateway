@@ -1,6 +1,9 @@
 package br.com.sebratel.gateway.resilience;
 
 import br.com.sebratel.gateway.observability.AccessLogWebFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -21,8 +24,13 @@ import java.util.Map;
 @RestController
 public class FallbackController {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(FallbackController.class);
+
     @RequestMapping(value = "/fallback/{service}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, Object>> fallback(@PathVariable String service, ServerWebExchange exchange) {
+        Throwable cause = exchange.getAttribute(ServerWebExchangeUtils.CIRCUITBREAKER_EXECUTION_EXCEPTION_ATTR);
+        LOGGER.warn("Fallback do servico {} ({} {}): {}", service, exchange.getRequest().getMethod(),
+                exchange.getRequest().getPath().value(), cause == null ? "sem excecao registrada" : cause.toString());
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("timestamp", OffsetDateTime.now().toString());
         body.put("status", 503);
