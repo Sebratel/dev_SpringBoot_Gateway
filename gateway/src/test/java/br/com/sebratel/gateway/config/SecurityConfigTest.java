@@ -12,7 +12,8 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
  * Politica de autenticacao do gateway. As rotas autenticadas que passam pela seguranca tentam chegar ao servico
  * (que nao existe no teste) e voltam 5xx: o que importa aqui e que NAO sao 401.
  */
-@SpringBootTest(properties = {"gateway.security.basic.user=n8n", "gateway.security.basic.password=segredo-de-teste"})
+@SpringBootTest(properties = {"gateway.security.basic.user=n8n", "gateway.security.basic.password=segredo-de-teste",
+        "management.prometheus.metrics.export.enabled=true"})
 @AutoConfigureWebTestClient
 class SecurityConfigTest {
 
