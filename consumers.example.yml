@@ -1,0 +1,24 @@
+# Exemplo do cadastro de consumidores do gateway. NAO coloque senhas aqui: so hashes bcrypt.
+# Gere cada entrada com o comando de docs/CONSUMIDORES.md (ele cria a senha aleatoria e o hash).
+# O arquivo real fica FORA do Git: em GATEWAY_CONSUMERS_B64 (este YAML em base64, uma linha) ou num arquivo apontado por
+# GATEWAY_CONSUMERS_FILE.
+consumers:
+  - name: n8n-massivas
+    username: n8n-massivas
+    password-hash: "{bcrypt}$2y$10$EXEMPLO-troque-pelo-hash-gerado-pelo-comando-do-guia.........."
+    description: "Automacao n8n de massivas (time de NOC)"
+    rate-limit: {requests-per-second: 20, burst: 100}      # opcional; sem isso vale o padrao do gateway
+    allowed-routes:                                         # opcional; sem isso o consumidor pode todas as rotas
+      - "GET /api/v1/massivas/recuperar-pelo-banco"
+      - "POST /api/v1/massivas/salvar-massiva-via-api"
+      - "DELETE /api/v1/massivas/finalizar-chamado-via-api"
+      - "POST /api/v1/afetados"
+      - "DELETE /api/v1/afetados/protocol/*"
+    expires: 2027-12-31                                     # opcional; depois dessa data o consumidor deixa de entrar
+  - name: app-colaboradores
+    username: app-colaboradores
+    password-hash: "{bcrypt}$2y$10$EXEMPLO-troque-pelo-hash-gerado-pelo-comando-do-guia.........."
+    description: "Aplicativos que perguntam se a pessoa e corporativa"
+    allowed-routes:
+      - "GET /api/v1/employee/is-corporativo"
+      - "GET /api/v1/employee/get-person-id-by-email"

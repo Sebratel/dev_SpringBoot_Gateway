@@ -1,45 +1,132 @@
 # Stack de STAGING (Portainer, a partir do Git: branch staging). A imagem e construida no GitHub Actions
 # (workflow staging-image.yml) e publicada no GHCR; o Portainer so a baixa.
-# Rede PRIVADA "gateway-backend": so o API Gateway e os 6 servicos estao nela. Os servicos NAO ficam na rede "proxy"
-# (compartilhada com antifraude, dho, hub, kibana etc.): so o gateway recebe chamadas deles. Nenhum servico publica porta.
+#
+# Desenho:   cliente -> NPM -> api-gateway-lb (nginx, portas 8082/8094) -> 2 instancias do gateway -> 6 servicos
+#   - A rede "proxy" (compartilhada com outras aplicacoes) so tem o nginx. As instancias do gateway e os servicos ficam
+#     na rede PRIVADA "gateway-backend": ninguem de fora chama o gateway sem passar pelo nginx, nem os servicos sem
+#     passar pelo gateway. Nenhum servico publica porta.
+#   - O nginx divide as chamadas entre as instancias (DNS do Docker, renovado a cada 5 s), aplica o limite de taxa
+#     por consumidor COMPARTILHADO entre as instancias e esconde o actuator (metricas ficam na porta 8086, so na rede privada).
+#   - Mais instancias: mude "replicas" (e so isso).
 services:
   api-gateway:
     image: ghcr.io/sebratel/api-gateway:staging
     pull_policy: always
-    container_name: api-gateway-stage
     restart: unless-stopped
     mem_limit: 512m
+    deploy:
+      replicas: 2
     networks:
-      - proxy      # entrada: o proxy reverso (NPM) fala com o gateway
-      - backend    # saida: o gateway fala com os servicos
-    ports:
-      - "8082:8085"
-      - "8094:8085"
+      - backend    # recebe do nginx e fala com os servicos; a porta 8086 (actuator) so existe aqui dentro
     environment:
       - SERVER_PORT=8085
+      - MANAGEMENT_PORT=8086
       - APP_ENV=staging
       - TZ=America/Sao_Paulo
+      - JAVA_OPTS=-XX:MaxRAMPercentage=60 -XX:+ExitOnOutOfMemoryError
       - MASSIVAS_URL=http://massivas-service-stage:8101
       - SPLITTERS_URL=http://splitters-service-stage:8102
       - COMERCIAL_URL=http://comercial-service-stage:8103
       - RADIUS_URL=http://radius-service-stage:8104
       - ESTOQUE_URL=http://estoque-service-stage:8105
       - PESSOAS_URL=http://pessoas-service-stage:8106
-      # Monolito atual do stage (container do BFF). Ajustar se o nome mudar.
-      - LEGACY_BFF_URL=http://bff-java-service-stage:8085
       - GATEWAY_DEFAULT_RESPONSE_TIMEOUT=600s
-      # Autenticacao (so o gateway autentica). Basic legado: as mesmas SECURITY_USER/SECURITY_PASS do BFF original.
+      # Autenticacao (so o gateway autentica). SECURITY_USER/SECURITY_PASS = consumidor "legacy-admin" (o Basic unico
+      # antigo), que continua valendo ate cada sistema ganhar o seu. Consumidores novos: GATEWAY_CONSUMERS_B64
+      # (o YAML do cadastro em base64, uma linha) - ver docs/CONSUMIDORES.md.
       - SECURITY_USER=${SECURITY_USER:-}
       - SECURITY_PASS=${SECURITY_PASS:-}
+      - GATEWAY_CONSUMERS_B64=${GATEWAY_CONSUMERS_B64:-}
       - ALLOWED_EMAIL_DOMAIN=${ALLOWED_EMAIL_DOMAIN:-@sebratel.com.br}
       - DEPRECATION_SINCE=${DEPRECATION_SINCE:-2026-10-17}
       - DEPRECATION_SUNSET=${DEPRECATION_SUNSET:-2027-01-17}
     healthcheck:
       test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8085'"]
-      interval: 30s
+      interval: 15s
       timeout: 5s
       retries: 3
       start_period: 60s
+
+  gateway-lb:
+    image: nginx:1.27-alpine
+    pull_policy: always
+    container_name: api-gateway-lb
+    restart: unless-stopped
+    mem_limit: 128m
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+    networks:
+      - proxy      # entrada: o NPM fala com o nginx
+      - backend    # saida: o nginx fala com as instancias
+    ports:
+      - "8082:80"
+      - "8094:80"
+    configs:
+      - source: lb_nginx_conf
+        target: /etc/nginx/nginx.conf
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/lb/health >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+# Em "content", cada cifrao do nginx aparece como $$ (o Compose le o $ como variavel).
+configs:
+  lb_nginx_conf:
+    content: |
+      worker_processes auto;
+      events { worker_connections 4096; }
+      http {
+        # DNS do Docker: reencontra as instancias a cada 5 s (instancia nova/recriada entra sozinha).
+        resolver 127.0.0.11 valid=5s ipv6=off;
+        server_tokens off;
+
+        log_format lb '$$remote_addr "$$request" $$status ms=$$request_time up=$$upstream_addr rid=$$sent_http_x_request_id xff="$$http_x_forwarded_for"';
+        access_log /dev/stdout lb;
+
+        # Limite de taxa por consumidor, COMPARTILHADO entre as instancias: a chave e o cabecalho Authorization
+        # (Basic = o consumidor; JWT = o usuario) ou, sem ele, o IP.
+        # Medido em producao (20/08 a 18/10): pico de 46 req/s e 96 req/min no total (media de ~1,7 req/min). Com +30% no
+        # proximo ano e folga: 20 req/s sustentado e rajada de 150 por consumidor (a rajada cobre o pico de 46 req/s x 1,3).
+        map $$http_authorization $$limit_key { default $$http_authorization; "" $$binary_remote_addr; }
+        limit_req_zone $$limit_key zone=consumer:10m rate=20r/s;
+        limit_req_status 429;
+
+        # O NPM ja manda X-Forwarded-Proto; sem ele (chamada direta), vale o esquema desta conexao.
+        map $$http_x_forwarded_proto $$fwd_proto { default $$http_x_forwarded_proto; "" $$scheme; }
+
+        server {
+          listen 80;
+          client_max_body_size 2m;
+
+          location = /lb/health { access_log off; return 200 "ok\n"; }
+
+          # Actuator: so a saude simples sai daqui; metricas e saude agregada ficam na porta 8086, que nao e publicada.
+          location = /actuator/health { set $$upstream http://api-gateway:8085; proxy_pass $$upstream; }
+          location /actuator/ { return 404; }
+
+          location / {
+            limit_req zone=consumer burst=150 nodelay;
+            set $$upstream http://api-gateway:8085;
+            proxy_pass $$upstream;
+            proxy_http_version 1.1;
+            proxy_set_header Connection "";
+            proxy_set_header Host $$host;
+            proxy_set_header X-Real-IP $$remote_addr;
+            proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $$fwd_proto;
+            proxy_connect_timeout 3s;
+            proxy_send_timeout 60s;
+            proxy_read_timeout 900s;
+            # So repete em outra instancia se a primeira nem aceitou a conexao ou devolveu 502/503; nunca repete POST/PATCH/DELETE.
+            proxy_next_upstream error timeout http_502 http_503;
+            proxy_next_upstream_tries 2;
+          }
+        }
+
+      }
 
 networks:
   proxy:

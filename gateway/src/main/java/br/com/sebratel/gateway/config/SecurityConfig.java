@@ -10,9 +10,6 @@ import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
-import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -20,7 +17,6 @@ import org.springframework.security.oauth2.jwt.JwtClaimValidator;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
-import org.springframework.security.core.userdetails.MapReactiveUserDetailsService;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.ServerAuthenticationEntryPoint;
 import org.springframework.security.web.server.header.ReferrerPolicyServerHttpHeadersWriter;
@@ -32,7 +28,6 @@ import reactor.core.publisher.Mono;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Autenticacao do ecossistema: acontece AQUI e so aqui. Os servicos nao validam credencial; recebem os dados do
@@ -40,8 +35,8 @@ import java.util.UUID;
  *
  * <ul>
  *   <li>JWT (ID token do Google): emissor do Google e e-mail do dominio da empresa;</li>
- *   <li>HTTP Basic legado: so existe se SECURITY_USER e SECURITY_PASS estiverem definidos (paridade com o BFF
- *       original, usado por scripts e pelo n8n);</li>
+ *   <li>HTTP Basic: um usuario por consumidor (ver {@code ConsumerRegistry}); o usuario unico antigo
+ *       (SECURITY_USER/SECURITY_PASS) continua valendo como o consumidor {@code legacy-admin} ate a migracao;</li>
  *   <li>rotas publicas: health check, {@code GET /api/v1/matrix} e {@code GET /api/v1/afetados/contract/**}
  *       (iguais as do BFF original).</li>
  * </ul>
@@ -57,12 +52,6 @@ public class SecurityConfig {
 
     @Value("${gateway.security.allowed-email-domain:@sebratel.com.br}")
     private String allowedEmailDomain;
-
-    @Value("${gateway.security.basic.user:}")
-    private String basicUser;
-
-    @Value("${gateway.security.basic.password:}")
-    private String basicPassword;
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
@@ -118,18 +107,6 @@ public class SecurityConfig {
         OAuth2TokenValidator<Jwt> domain = new JwtClaimValidator<String>("email",
                 email -> email != null && email.endsWith(emailDomain));
         return new DelegatingOAuth2TokenValidator<>(withIssuer, domain);
-    }
-
-    /** Basic legado: sem SECURITY_USER/SECURITY_PASS nao ha usuario valido (a senha vira aleatoria). */
-    @Bean
-    public ReactiveUserDetailsService basicUserDetailsService() {
-        boolean configured = !basicUser.isBlank() && !basicPassword.isBlank();
-        UserDetails user = User.builder()
-                .username(configured ? basicUser : "basic-disabled")
-                .password("{noop}" + (configured ? basicPassword : UUID.randomUUID()))
-                .roles("USER")
-                .build();
-        return new MapReactiveUserDetailsService(List.of(user));
     }
 
     private ServerAuthenticationEntryPoint unauthorized() {

@@ -37,11 +37,18 @@ gateway:
     basic:
       user: ${SECURITY_USER:}
       password: ${SECURITY_PASS:}
-  # Limite de taxa por consumidor (usuario autenticado; sem usuario, o IP). Balde de fichas em memoria.
+  # Cadastro de consumidores (um usuario Basic por sistema): arquivo YAML FORA do Git, so com hashes bcrypt, relido
+  # sozinho. Ver docs/CONSUMIDORES.md e consumers.example.yml. Sem o arquivo, vale so o usuario legado acima.
+  consumers:
+    file: ${GATEWAY_CONSUMERS_FILE:}
+    reload-seconds: 30
+  # Limite de taxa por consumidor, em memoria, POR INSTANCIA: e a rede de seguranca. O limite principal fica no nginx
+  # (compartilhado entre as instancias). Medicao em producao (20/08 a 18/10): pico de 46 req/s e 96 req/min no total;
+  # com +30% e folga, o padrao e 50 req/s sustentado e rajada de 300. Cada consumidor pode ter o seu no cadastro.
   rate-limit:
     enabled: ${GATEWAY_RATE_LIMIT_ENABLED:true}
-    requests-per-second: ${GATEWAY_RATE_LIMIT_RPS:30}
-    burst: ${GATEWAY_RATE_LIMIT_BURST:100}
+    requests-per-second: ${GATEWAY_RATE_LIMIT_RPS:50}
+    burst: ${GATEWAY_RATE_LIMIT_BURST:300}
 
 # Deprecacao de rotas sem uso (deprecated-routes.txt): header Deprecation (RFC 9745) e Sunset (RFC 8594).
 deprecation:
@@ -54,10 +61,14 @@ server:
   forward-headers-strategy: framework
 
 management:
+  server:
+    # Actuator em porta propria, NAO publicada: so a rede privada (Prometheus) enxerga metricas e saude agregada.
+    # A porta publica responde so /actuator/health (HealthCompatController).
+    port: ${MANAGEMENT_PORT:8086}
   endpoints:
     web:
       exposure:
-        # services = saude agregada dos servicos; prometheus = metricas para coleta. Ambos exigem autenticacao.
+        # services = saude agregada dos servicos; prometheus = metricas para coleta.
         include: health,info,metrics,prometheus,services
   metrics:
     tags:
