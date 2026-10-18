@@ -1,6 +1,7 @@
 # Stack de STAGING (Portainer, a partir do Git: branch staging). A imagem e construida no GitHub Actions
 # (workflow staging-image.yml) e publicada no GHCR; o Portainer so a baixa.
-# Rede externa "proxy": a mesma do BFF atual; os serviços se enxergam pelo nome do container.
+# Rede PRIVADA "gateway-backend": so o API Gateway e os 6 servicos estao nela. Os servicos NAO ficam na rede "proxy"
+# (compartilhada com antifraude, dho, hub, kibana etc.): so o gateway recebe chamadas deles. Nenhum servico publica porta.
 services:
   api-gateway:
     image: ghcr.io/sebratel/api-gateway:staging
@@ -9,7 +10,8 @@ services:
     restart: unless-stopped
     mem_limit: 512m
     networks:
-      - proxy
+      - proxy      # entrada: o proxy reverso (NPM) fala com o gateway
+      - backend    # saida: o gateway fala com os servicos
     ports:
       - "8082:8085"
       - "8094:8085"
@@ -42,3 +44,5 @@ services:
 networks:
   proxy:
     external: true
+  backend:
+    name: gateway-backend   # esta stack cria a rede; os servicos a usam como externa
