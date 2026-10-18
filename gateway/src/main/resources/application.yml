@@ -91,3 +91,13 @@ resilience4j:
         wait-duration-in-open-state: 30s
         permitted-number-of-calls-in-half-open-state: 3
         automatic-transition-from-open-to-half-open-enabled: true
+        # Bulkhead cheio (muitas chamadas simultaneas) e excesso de carga do gateway, nao falha do servico: nao abre o circuito.
+        ignore-exceptions:
+          - io.github.resilience4j.bulkhead.BulkheadFullException
+  # O Bulkhead que o filtro CircuitBreaker cria por rota vem com 25 chamadas simultaneas e espera 0: uma rajada fria
+  # de 100 requisicoes tomava 503 (e abria o circuito). Chamadas sao assincronas (WebFlux), entao o limite e folgado.
+  bulkhead:
+    configs:
+      default:
+        max-concurrent-calls: ${GATEWAY_MAX_CONCURRENT_CALLS:1000}
+        max-wait-duration: 0
