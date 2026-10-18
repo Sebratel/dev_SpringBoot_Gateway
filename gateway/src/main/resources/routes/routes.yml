@@ -3,7 +3,7 @@
 # Uma unica lista de rotas (o Spring substitui, nao junta, listas de arquivos diferentes):
 # 1) rotas lentas conhecidas: SEM limite de resposta (metadata response-timeout: -1), order -1, ganham das do servico.
 #    A lista e a mesma de contract-tests/src/test/resources/known-slow-routes.txt (o TimeoutPolicyTest confere).
-# 2) uma rota por servico com todos os caminhos dele (order 10). As demais seguem o limite padrao (60 s) e estouram em 504.
+# 2) uma rota por servico, com circuit breaker (503 em /fallback/{servico}) e retry so de GET em 502/503/erro de conexao; com todos os caminhos dele (order 10). As demais seguem o limite padrao (60 s) e estouram em 504.
 gateway:
   upstreams:
     massivas: ${MASSIVAS_URL:http://massivas-service:8101}
@@ -167,30 +167,126 @@ spring:
             - id: svc-massivas
               uri: ${gateway.upstreams.massivas}
               order: 10
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: massivas
+                    fallbackUri: forward:/fallback/massivas
+                    statusCodes: 502,503,504
+                - name: Retry
+                  args:
+                    retries: ${GATEWAY_RETRIES:2}
+                    methods: GET
+                    statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE
+                    exceptions: java.io.IOException
+                    backoff:
+                      firstBackoff: 100ms
+                      maxBackoff: 1000ms
+                      factor: 2
               predicates:
                 - Path=/api/v1/afetados,/api/v1/afetados/contract/{contractId},/api/v1/afetados/pppoe/{pppoe},/api/v1/afetados/protocol/{protocol},/api/v1/gmud/abrir-via-api,/api/v1/gmud/encerrar-via-api,/api/v1/gmud/finalizar-via-api,/api/v1/gmud/open-via-api,/api/v1/gmud/relato-via-api,/api/v1/gmud/report-via-api,/api/v1/impacted-users,/api/v1/impacted-users/contract/{contractId},/api/v1/impacted-users/pppoe/{pppoe},/api/v1/impacted-users/protocol/{protocol},/api/v1/massivas,/api/v1/massivas-eleven,/api/v1/massivas-eleven/abrir-protocolo-infra-via-api,/api/v1/massivas-eleven/estimated-end/contract/{contractNumber},/api/v1/massivas-eleven/finalizar-chamado-via-api,/api/v1/massivas-eleven/finalize-ticket-via-api,/api/v1/massivas-eleven/getAllMassives,/api/v1/massivas-eleven/open-infra-solicitation-via-api,/api/v1/massivas-eleven/previsao-finalizacao/contrato/{contractNumber},/api/v1/massivas-eleven/recover-via-database,/api/v1/massivas-eleven/recuperar-pelo-banco,/api/v1/massivas-eleven/salvar-massiva-via-api,/api/v1/massivas-eleven/save-massive-via-api,/api/v1/massivas-history/recover-via-database,/api/v1/massivas-history/recuperar-pelo-banco,/api/v1/massivas-history/{protocol}/encerrar,/api/v1/massivas-history/{protocol}/finalize,/api/v1/massivas-splitters/recover-via-database,/api/v1/massivas-splitters/recuperar-pelo-banco,/api/v1/massivas-splitters/{protocol}/encerrar,/api/v1/massivas-splitters/{protocol}/finalize,/api/v1/massivas/abrir-protocolo-infra-via-api,/api/v1/massivas/estimated-end/contract/{contractNumber},/api/v1/massivas/finalizar-chamado-via-api,/api/v1/massivas/finalize-ticket-via-api,/api/v1/massivas/getAllMassives,/api/v1/massivas/open-infra-solicitation-via-api,/api/v1/massivas/previsao-finalizacao/contrato/{contractNumber},/api/v1/massivas/recover-via-database,/api/v1/massivas/recuperar-pelo-banco,/api/v1/massivas/salvar-massiva-via-api,/api/v1/massivas/save-massive-via-api,/api/v1/massive-incidents,/api/v1/massive-incidents/abrir-protocolo-infra-via-api,/api/v1/massive-incidents/estimated-end/contract/{contractNumber},/api/v1/massive-incidents/finalizar-chamado-via-api,/api/v1/massive-incidents/finalize-ticket-via-api,/api/v1/massive-incidents/getAllMassives,/api/v1/massive-incidents/open-infra-solicitation-via-api,/api/v1/massive-incidents/previsao-finalizacao/contrato/{contractNumber},/api/v1/massive-incidents/recover-via-database,/api/v1/massive-incidents/recuperar-pelo-banco,/api/v1/massive-incidents/salvar-massiva-via-api,/api/v1/massive-incidents/save-massive-via-api,/api/v1/matrix,/api/v1/sites,/api/v1/sites/search,/api/v1/usuario-afetado,/api/v1/usuario-afetado/contract/{contractId},/api/v1/usuario-afetado/pppoe/{pppoe},/api/v1/usuario-afetado/protocol/{protocol}
             - id: svc-splitters
               uri: ${gateway.upstreams.splitters}
               order: 10
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: splitters
+                    fallbackUri: forward:/fallback/splitters
+                    statusCodes: 502,503,504
+                - name: Retry
+                  args:
+                    retries: ${GATEWAY_RETRIES:2}
+                    methods: GET
+                    statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE
+                    exceptions: java.io.IOException
+                    backoff:
+                      firstBackoff: 100ms
+                      maxBackoff: 1000ms
+                      factor: 2
               predicates:
                 - Path=/api/v1/splitters/alertas-protocolo-pendente,/api/v1/splitters/listarConnections,/api/v1/splitters/listarOlts,/api/v1/splitters/listarSplitters,/api/v1/splitters/listarSplitters-paginado,/api/v1/splitters/recuperarToken,/api/v1/splitters/solicitacoes/cliente/{clientId},/api/v1/splitters/{splitterId}
             - id: svc-comercial
               uri: ${gateway.upstreams.comercial}
               order: 10
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: comercial
+                    fallbackUri: forward:/fallback/comercial
+                    statusCodes: 502,503,504
+                - name: Retry
+                  args:
+                    retries: ${GATEWAY_RETRIES:2}
+                    methods: GET
+                    statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE
+                    exceptions: java.io.IOException
+                    backoff:
+                      firstBackoff: 100ms
+                      maxBackoff: 1000ms
+                      factor: 2
               predicates:
                 - Path=/api/v1/acquisitions/recover-acquisition-orders,/api/v1/acquisitions/recuperar-pedidos-de-aquisicao,/api/v1/apoio-semanal/vendedor,/api/v1/aquisicoes/recover-acquisition-orders,/api/v1/aquisicoes/recuperar-pedidos-de-aquisicao,/api/v1/contract-activations/report,/api/v1/contract-payments/first-activation,/api/v1/contracts/ativacao-pendente-fatura,/api/v1/contracts/blocked,/api/v1/contracts/bloqueados,/api/v1/contracts/pending-activation-invoice,/api/v1/contracts/sem-fatura,/api/v1/contracts/without-invoice,/api/v1/contrato-ativacao-fatura/ativacao-pendente-fatura,/api/v1/contrato-ativacao-fatura/pending-activation-invoice,/api/v1/contrato-bloqueado/blocked,/api/v1/contrato-bloqueado/bloqueados,/api/v1/contrato-sem-fatura/sem-fatura,/api/v1/contrato-sem-fatura/without-invoice,/api/v1/contratos/ativacao-pendente-fatura,/api/v1/contratos/blocked,/api/v1/contratos/bloqueados,/api/v1/contratos/pending-activation-invoice,/api/v1/contratos/report,/api/v1/contratos/sem-fatura,/api/v1/contratos/without-invoice,/api/v1/primeiro-pagante-mensal/first-monthly-payer,/api/v1/primeiro-pagante-mensal/primeiro-pagante-mensal,/api/v1/relatorio-cliente-nome-duplicado/clientes-nomes-duplicados,/api/v1/relatorio-cliente-nome-duplicado/duplicate-client-names,/api/v1/relatorios/clientes-nomes-duplicados,/api/v1/relatorios/duplicate-client-names,/api/v1/relatorios/first-monthly-payer,/api/v1/relatorios/primeiro-pagante-mensal,/api/v1/reports/clientes-nomes-duplicados,/api/v1/reports/duplicate-client-names,/api/v1/reports/first-monthly-payer,/api/v1/reports/primeiro-pagante-mensal,/api/v1/sellers/active,/api/v1/sellers/ativos,/api/v1/sellers/vendedores-ativos,/api/v1/vendedores/active,/api/v1/vendedores/ativos,/api/v1/vendedores/vendedores-ativos,/api/v1/weekly-reports/vendedor
             - id: svc-radius
               uri: ${gateway.upstreams.radius}
               order: 10
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: radius
+                    fallbackUri: forward:/fallback/radius
+                    statusCodes: 502,503,504
+                - name: Retry
+                  args:
+                    retries: ${GATEWAY_RETRIES:2}
+                    methods: GET
+                    statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE
+                    exceptions: java.io.IOException
+                    backoff:
+                      firstBackoff: 100ms
+                      maxBackoff: 1000ms
+                      factor: 2
               predicates:
                 - Path=/api/v1/consumo,/api/v1/consumo-alto,/api/v1/consumo-alto-paginado,/api/v1/contracts/last-connections,/api/v1/contracts/ultimas-conexoes,/api/v1/contratos/last-connections,/api/v1/contratos/ultimas-conexoes,/api/v1/high-consumption,/api/v1/high-consumption-paged,/api/v1/radius/duplicate-calling-stations,/api/v1/radius/duplicate-prefixes,/api/v1/radius/first-authentications,/api/v1/ultima-conexao/last-connections,/api/v1/ultima-conexao/ultimas-conexoes
             - id: svc-estoque
               uri: ${gateway.upstreams.estoque}
               order: 10
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: estoque
+                    fallbackUri: forward:/fallback/estoque
+                    statusCodes: 502,503,504
+                - name: Retry
+                  args:
+                    retries: ${GATEWAY_RETRIES:2}
+                    methods: GET
+                    statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE
+                    exceptions: java.io.IOException
+                    backoff:
+                      firstBackoff: 100ms
+                      maxBackoff: 1000ms
+                      factor: 2
               predicates:
                 - Path=/api/v1/assets/pendentes,/api/v1/assets/pending,/api/v1/estoque/movimentacao,/api/v1/estoque/tecnico,/api/v1/patrimonio-pendente/pendentes,/api/v1/patrimonio-pendente/pending,/api/v1/patrimonios/pendentes,/api/v1/patrimonios/pending
             - id: svc-pessoas
               uri: ${gateway.upstreams.pessoas}
               order: 10
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: pessoas
+                    fallbackUri: forward:/fallback/pessoas
+                    statusCodes: 502,503,504
+                - name: Retry
+                  args:
+                    retries: ${GATEWAY_RETRIES:2}
+                    methods: GET
+                    statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE
+                    exceptions: java.io.IOException
+                    backoff:
+                      firstBackoff: 100ms
+                      maxBackoff: 1000ms
+                      factor: 2
               predicates:
                 - Path=/api/v1/employee/get-cpf-by-contract,/api/v1/employee/get-person-id-by-email,/api/v1/employee/get-person-name-by-cpf,/api/v1/employee/get-user-by-token,/api/v1/employee/is-corporativo

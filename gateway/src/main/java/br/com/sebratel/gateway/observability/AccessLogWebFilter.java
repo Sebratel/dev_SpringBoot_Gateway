@@ -33,19 +33,24 @@ public class AccessLogWebFilter implements WebFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         long start = System.nanoTime();
         String requestId = requestIdOf(exchange.getRequest());
+        TraceContext trace = TraceContext.continueOrStart(exchange.getRequest().getHeaders().getFirst(TraceContext.HEADER));
         ServerWebExchange tracked = exchange.mutate()
-                .request(request -> request.headers(headers -> headers.set(REQUEST_ID, requestId)))
+                .request(request -> request.headers(headers -> {
+                    headers.set(REQUEST_ID, requestId);
+                    headers.set(TraceContext.HEADER, trace.traceparent());
+                }))
                 .build();
         tracked.getResponse().getHeaders().set(REQUEST_ID, requestId);
+        tracked.getResponse().getHeaders().set(TraceContext.RESPONSE_HEADER, trace.traceId());
 
         return chain.filter(tracked).doFinally(signal -> {
             Route route = tracked.getAttribute(ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR);
             Object user = tracked.getAttribute(IdentityHeadersFilter.USER_ATTRIBUTE);
             var status = tracked.getResponse().getStatusCode();
-            ACCESS.info("method={} path={} status={} ms={} route={} user={} requestId={}",
+            ACCESS.info("method={} path={} status={} ms={} route={} user={} requestId={} traceId={}",
                     tracked.getRequest().getMethod(), tracked.getRequest().getPath().value(),
                     status == null ? "-" : status.value(), (System.nanoTime() - start) / 1_000_000,
-                    route == null ? "-" : route.getId(), user == null ? "-" : user, requestId);
+                    route == null ? "-" : route.getId(), user == null ? "-" : user, requestId, trace.traceId());
         });
     }
 

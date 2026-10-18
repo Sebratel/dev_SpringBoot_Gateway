@@ -21,6 +21,11 @@ spring:
             # stage corta em 90 s, entao use a porta direta para essas. As rotas lentas (no routes/routes.yml, metadata response-timeout: -1) ignoram este limite.
             response-timeout: ${GATEWAY_DEFAULT_RESPONSE_TIMEOUT:600s}
             connect-timeout: 10000
+          # Limite do corpo da requisicao (Content-Length): acima disso o gateway responde 413 sem chegar ao servico.
+          default-filters:
+            - name: RequestSize
+              args:
+                maxSize: ${GATEWAY_MAX_BODY_SIZE:2MB}
   config:
     import:
       - optional:classpath:routes/routes.yml
@@ -32,6 +37,11 @@ gateway:
     basic:
       user: ${SECURITY_USER:}
       password: ${SECURITY_PASS:}
+  # Limite de taxa por consumidor (usuario autenticado; sem usuario, o IP). Balde de fichas em memoria.
+  rate-limit:
+    enabled: ${GATEWAY_RATE_LIMIT_ENABLED:true}
+    requests-per-second: ${GATEWAY_RATE_LIMIT_RPS:30}
+    burst: ${GATEWAY_RATE_LIMIT_BURST:100}
 
 # Deprecacao de rotas sem uso (deprecated-routes.txt): header Deprecation (RFC 9745) e Sunset (RFC 8594).
 deprecation:
@@ -40,9 +50,33 @@ deprecation:
 
 server:
   port: ${SERVER_PORT:8085}
+  # O proxy do stage manda X-Forwarded-Proto/For: com isso o gateway enxerga https (HSTS) e o IP real do cliente.
+  forward-headers-strategy: framework
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        # services = saude agregada dos servicos; prometheus = metricas para coleta. Ambos exigem autenticacao.
+        include: health,info,metrics,prometheus,services
+  metrics:
+    tags:
+      application: api-gateway
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        spring.cloud.gateway.requests: true
+
+# Circuit breaker por servico (filtro CircuitBreaker nas rotas svc-*). Abre quando metade das ultimas 20 chamadas
+# falhou (502/503/504 ou erro de conexao; 4xx e 500 de negocio NAO contam) e responde 503 em /fallback/{servico}.
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true

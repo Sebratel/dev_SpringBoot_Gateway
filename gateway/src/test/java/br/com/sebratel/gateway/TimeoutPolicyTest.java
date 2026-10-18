@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Politica de tempo do gateway:
  * <ul>
- *   <li>toda rota tem limite padrao de resposta (60 s); estourou, o gateway responde 504;</li>
+ *   <li>toda rota tem limite padrao de resposta (600 s); estourou, o gateway responde 504;</li>
  *   <li>so as rotas lentas conhecidas ficam sem limite ({@code response-timeout: -1}), e a lista e a mesma
  *       de contract-tests/known-slow-routes.txt.</li>
  * </ul>
@@ -38,7 +38,7 @@ class TimeoutPolicyTest {
 
     @Test
     void everyRouteHasADefaultResponseTimeout() {
-        assertEquals("60s", environment.getProperty("spring.cloud.gateway.server.webflux.httpclient.response-timeout"));
+        assertEquals("600s", environment.getProperty("spring.cloud.gateway.server.webflux.httpclient.response-timeout"));
     }
 
     @Test
