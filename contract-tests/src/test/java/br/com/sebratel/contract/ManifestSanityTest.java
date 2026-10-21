@@ -22,7 +22,7 @@ class ManifestSanityTest {
 
     @Test
     void hasAllRoutes() {
-        assertEquals(154, routes.size());
+        assertEquals(158, routes.size());
     }
 
     @Test
@@ -37,7 +37,7 @@ class ManifestSanityTest {
     void routesPerServiceMatchTheSpec() {
         Map<String, Long> perService = routes.stream()
                 .collect(Collectors.groupingBy(Route::service, Collectors.counting()));
-        assertEquals(Map.of("massivas", 74L, "comercial", 45L, "radius", 14L,
+        assertEquals(Map.of("massivas", 78L, "comercial", 45L, "radius", 14L,
                 "estoque", 8L, "splitters", 8L, "pessoas", 5L), perService);
     }
 
