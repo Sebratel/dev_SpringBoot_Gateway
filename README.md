@@ -1,9 +1,9 @@
 # dev_SpringBoot_Gateway
 
-API Gateway da Sebratel (Spring Cloud Gateway, WebFlux) e o módulo `contract-tests`, que garante que as **158 rotas** do BFF
+API Gateway da Sebratel (Spring Cloud Gateway, WebFlux) e o módulo `contract-tests`, que garante que as **164 rotas** do BFF
 continuam idênticas atrás do gateway. Parte da migração descrita em `Sebratel/dev_SpringBoot_APIGateway` (`specs/API_GATEWAY.md`).
 
-> **Estado:** o gateway **autentica**, repassa a identidade, roteia as 158 rotas para os 6 serviços e aplica a política de tempo.
+> **Estado:** o gateway **autentica**, repassa a identidade, roteia as 164 rotas para os 6 serviços e aplica a política de tempo.
 > Os serviços não têm segurança: recebem só os dados do usuário (`X-User-*`).
 
 ## Módulos
@@ -19,7 +19,7 @@ continuam idênticas atrás do gateway. Parte da migração descrita em `Sebrate
 | Autenticação centralizada | **Feito.** JWT do Google (emissor + e-mail `@sebratel.com.br`) e Basic legado (`SECURITY_USER`/`SECURITY_PASS`, só se definidos); rotas públicas explícitas (`GET /api/v1/matrix`, `GET /api/v1/afetados/contract/**`, health) |
 | Propagação de identidade | **Feito.** `X-User-Email`, `X-User-Name` (URL-encoded), `X-User-Id`, `X-Auth-Method`. Qualquer `X-User-*`/`X-Auth-*` vindo de fora é descartado (ninguém se passa por outro usuário) e o `Authorization` **não** chega ao serviço |
 | Serviços sem credencial | **Feito.** Spring Security removido dos 6 serviços; só se alcançam pela rede interna (sem porta publicada) |
-| Roteamento por serviço | **Feito.** 158 rotas, conferidas contra o manifesto (`RouteCoverageTest`) |
+| Roteamento por serviço | **Feito.** 164 rotas, conferidas contra o manifesto (`RouteCoverageTest`) |
 | Limite de tempo | **Feito.** 60 s (504); 18 rotas lentas sem limite |
 | CORS central | **Feito.** Respondido no gateway (preflight antes da autenticação); expõe `Deprecation`, `Sunset`, `Link`, `X-Request-Id` |
 | Correlação e log de acesso | **Feito.** `X-Request-Id` (do cliente ou gerado) vai ao serviço e volta; linha `ACCESS` por requisição (rota, status, ms, usuário) |
