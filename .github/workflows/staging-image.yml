@@ -44,3 +44,9 @@ jobs:
             org.opencontainers.image.revision=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Acionar deploy no Portainer (pull + redeploy)
+        # So dispara o pull da imagem ja publicada acima; o host nao faz build, por isso nao
+        # esbarra no timeout de 90s do proxy do stage (ver comentario no topo do arquivo).
+        run: |
+          curl --fail --silent --show-error -X POST "${{ secrets.PORTAINER_GATEWAY_WEBHOOK_URL }}"
