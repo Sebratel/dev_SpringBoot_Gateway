@@ -205,7 +205,7 @@ spring:
                       maxBackoff: 1000ms
                       factor: 2
               predicates:
-                - Path=/api/v1/splitters/alertas-protocolo-pendente,/api/v1/splitters/listarConnections,/api/v1/splitters/listarOlts,/api/v1/splitters/listarSplitters,/api/v1/splitters/listarSplitters-paginado,/api/v1/splitters/recuperarToken,/api/v1/splitters/solicitacoes/cliente/{clientId},/api/v1/splitters/{splitterId}
+                - Path=/api/v1/splitters/alertas-protocolo-pendente,/api/v1/splitters/listarConnections,/api/v1/splitters/listarOlts,/api/v1/splitters/listarSplitters,/api/v1/splitters/listarSplitters-paginado,/api/v1/splitters/recuperarToken,/api/v1/splitters/rotas-por-pppoe,/api/v1/splitters/solicitacoes/cliente/{clientId},/api/v1/splitters/{splitterId}
             - id: svc-comercial
               uri: ${gateway.upstreams.comercial}
               order: 10
