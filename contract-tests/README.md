@@ -1,15 +1,15 @@
 # contract-tests
 
-Garante que as **164 rotas HTTP** do BFF continuam idênticas depois da migração para o gateway
+Garante que as **165 rotas HTTP** do BFF continuam idênticas depois da migração para o gateway
 (`specs/API_GATEWAY.md`). O mesmo teste roda contra o monólito (linha de base) e contra o gateway.
 
 ## Peças
 
 | Peça | Onde | O que faz |
 |---|---|---|
-| Manifesto | `src/test/resources/manifest.json` | Lista das 164 rotas: método, path (com todos os aliases), serviço de destino, auth, se é segura, parâmetros e corpo |
+| Manifesto | `src/test/resources/manifest.json` | Lista das 165 rotas: método, path (com todos os aliases), serviço de destino, auth, se é segura, parâmetros e corpo |
 | Gerador/guarda | `src/test/java/.../bff/contract/RouteManifestTest` (no monólito, `dev_SpringBoot_APIGateway`) | Gera o manifesto por reflexão nos controllers, sem banco. **Falha se uma rota do monólito mudar sem o manifesto ser atualizado** |
-| `ManifestSanityTest` | este módulo | Confere 164 rotas únicas, contagem por serviço (84/45/14/8/8/5), só 2 rotas públicas, 3 GET com corpo |
+| `ManifestSanityTest` | este módulo | Confere 165 rotas únicas, contagem por serviço (84/45/14/9/8/5), só 2 rotas públicas, 3 GET com corpo |
 | `*ContractTest` (um por serviço) + `PublicRoutesContractTest` | este módulo | Exercitam as rotas contra uma URL base (ver abaixo). Rodam **em paralelo** |
 
 ## Atualizar o manifesto (quando o monólito mudar de propósito)

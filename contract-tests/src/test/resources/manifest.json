@@ -1700,6 +1700,17 @@
   "headers" : [ ],
   "body" : null
 }, {
+  "method" : "POST",
+  "path" : "/api/v1/splitters/rotas-por-pppoe",
+  "service" : "splitters",
+  "auth" : "authenticated",
+  "safe" : true,
+  "handler" : "SplittersController#rotasPorPppoe",
+  "pathVariables" : [ ],
+  "queryParams" : [ ],
+  "headers" : [ ],
+  "body" : "RotaPorPppoeInputDTO"
+}, {
   "method" : "GET",
   "path" : "/api/v1/splitters/solicitacoes/cliente/{clientId}",
   "service" : "splitters",
