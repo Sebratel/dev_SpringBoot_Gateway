@@ -18,6 +18,9 @@ services:
       replicas: 2
     networks:
       - backend    # recebe do nginx e fala com os servicos; a porta 8086 (actuator) so existe aqui dentro
+    # O Vault roda em outra stack e publica a 8200 no host: o nome "vault.interno" aponta para o host (sem rede externa).
+    extra_hosts:
+      - "vault.interno:host-gateway"
     environment:
       - SERVER_PORT=8085
       - MANAGEMENT_PORT=8086
@@ -31,12 +34,14 @@ services:
       - ESTOQUE_URL=http://estoque-service-stage:8105
       - PESSOAS_URL=http://pessoas-service-stage:8106
       - GATEWAY_DEFAULT_RESPONSE_TIMEOUT=600s
-      # Autenticacao (so o gateway autentica). SECURITY_USER/SECURITY_PASS = consumidor "legacy-admin" (o Basic unico
-      # antigo), que continua valendo ate cada sistema ganhar o seu. Consumidores novos: GATEWAY_CONSUMERS_B64
-      # (o YAML do cadastro em base64, uma linha) - ver docs/CONSUMIDORES.md.
-      - SECURITY_USER=${SECURITY_USER:-}
-      - SECURITY_PASS=${SECURITY_PASS:-}
-      - GATEWAY_CONSUMERS_B64=${GATEWAY_CONSUMERS_B64:-}
+      # Segredos (SECURITY_USER, SECURITY_PASS, GATEWAY_CONSUMERS_B64) NAO ficam mais aqui: o gateway le do Vault
+      # (secret/api-gateway/staging) no boot, pelo perfil "vault". Ver docs/VAULT.md. Se o Vault estiver
+      # inacessivel ou selado, o gateway nao sobe (fail-fast).
+      - SPRING_PROFILES_ACTIVE=staging,vault
+      - VAULT_ADDR=${VAULT_ADDR:-http://vault.interno:8200}
+      # Unica credencial no Portainer: AppRole com permissao so de leitura nesse caminho. Sem ela o deploy falha.
+      - VAULT_ROLE_ID=${VAULT_ROLE_ID:?defina VAULT_ROLE_ID no Environment da stack}
+      - VAULT_SECRET_ID=${VAULT_SECRET_ID:?defina VAULT_SECRET_ID no Environment da stack}
       - ALLOWED_EMAIL_DOMAIN=${ALLOWED_EMAIL_DOMAIN:-@sebratel.com.br}
       - DEPRECATION_SINCE=${DEPRECATION_SINCE:-2026-10-17}
       - DEPRECATION_SUNSET=${DEPRECATION_SUNSET:-2027-01-17}

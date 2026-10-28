@@ -61,10 +61,10 @@ docker run --rm --entrypoint java ghcr.io/sebratel/api-gateway:staging \
 1. Copie o bloco **ENTREGUE AO CONSUMIDOR** para quem vai usar (e nao guarde).
 2. Cole o bloco **COLE NO CADASTRO** num arquivo `consumers.yml` (modelo: `consumers.example.yml`) e ajuste
    `rate-limit`, `allowed-routes` e `expires`.
-3. Converta o arquivo para uma linha e coloque na variavel `GATEWAY_CONSUMERS_B64` da stack `api-gateway-staging-novo`
-   (Portainer -> Stacks -> Environment variables) e faca o redeploy:
+3. Converta o arquivo para uma linha e grave na chave `GATEWAY_CONSUMERS_B64` do Vault (`secret/api-gateway/staging`,
+   ver `docs/VAULT.md`), depois faca o redeploy da stack `api-gateway-staging-novo`:
    ```bash
-   base64 -w0 consumers.yml        # Linux/macOS/Git Bash
+   vault kv patch -mount=secret api-gateway/staging GATEWAY_CONSUMERS_B64="$(base64 -w0 consumers.yml)"
    ```
    Alternativa sem redeploy para trocar o cadastro: montar o arquivo no host e apontar `GATEWAY_CONSUMERS_FILE`; o gateway
    le o arquivo de novo a cada 30 s.

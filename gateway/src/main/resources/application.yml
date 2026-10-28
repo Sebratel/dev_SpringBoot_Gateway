@@ -8,6 +8,9 @@ spring:
           jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
           issuer-uri: https://accounts.google.com
   cloud:
+    vault:
+      # Desligado por padrao (dev local e testes); o perfil "vault" liga (application-vault.yml).
+      enabled: false
     circuitbreaker:
       resilience4j:
         # O TimeLimiter do Resilience4j vem com 1 s por padrao e cortaria as rotas lentas. O limite de
@@ -41,6 +44,8 @@ gateway:
   # sozinho. Ver docs/CONSUMIDORES.md e consumers.example.yml. Sem o arquivo, vale so o usuario legado acima.
   consumers:
     file: ${GATEWAY_CONSUMERS_FILE:}
+    # O mesmo cadastro em base64, numa linha. Em stage vem do Vault (chave GATEWAY_CONSUMERS_B64).
+    inline-base64: ${GATEWAY_CONSUMERS_B64:}
     reload-seconds: 30
   # Limite de taxa por consumidor, em memoria, POR INSTANCIA: e a rede de seguranca. O limite principal fica no nginx
   # (compartilhado entre as instancias). Medicao em producao (20/08 a 18/10): pico de 46 req/s e 96 req/min no total;

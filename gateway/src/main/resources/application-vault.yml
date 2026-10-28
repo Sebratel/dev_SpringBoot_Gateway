@@ -1,0 +1,31 @@
+# Perfil "vault": busca os segredos no HashiCorp Vault em vez de variaveis de ambiente do Portainer.
+# Ativado no stage com SPRING_PROFILES_ACTIVE=staging,vault. Sem o perfil (dev local e testes), nada muda.
+#
+# Segredos lidos de secret/api-gateway/staging (KV v2); cada chave vira uma propriedade com o proprio nome:
+#   SECURITY_USER, SECURITY_PASS, GATEWAY_CONSUMERS_B64
+# As variaveis de ambiente continuam valendo como fallback quando a chave nao existe no Vault.
+#
+# Unica credencial que ainda vive no Portainer: o AppRole (VAULT_ROLE_ID / VAULT_SECRET_ID), que so le este caminho.
+spring:
+  config:
+    import: vault://
+  cloud:
+    vault:
+      enabled: true
+      uri: ${VAULT_ADDR}
+      authentication: APPROLE
+      app-role:
+        role-id: ${VAULT_ROLE_ID}
+        secret-id: ${VAULT_SECRET_ID}
+      kv:
+        enabled: true
+        backend: secret
+        # Um unico caminho (secret/api-gateway/staging): o Spring nao tenta ler um contexto por perfil ativo,
+        # o que daria 403 fora da politica do AppRole.
+        default-context: api-gateway/staging
+        application-name: api-gateway/staging
+        profiles: []
+      # Vault inacessivel ou AppRole invalido: o gateway NAO sobe (melhor que subir sem autenticacao).
+      fail-fast: true
+      connection-timeout: 5000
+      read-timeout: 15000
