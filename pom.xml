@@ -9,7 +9,7 @@
         <relativePath/>
     </parent>
     <artifactId>api-gateway-parent</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.1.0</version>
     <packaging>pom</packaging>
     <name>api-gateway-parent</name>
     <description>API Gateway da Sebratel (roteamento, autenticação, resiliência) e testes de paridade de contrato</description>

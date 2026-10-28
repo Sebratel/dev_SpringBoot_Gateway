@@ -1,0 +1,6 @@
+# Pendencias de migracao ja existentes (uma por linha): <arquivo>:<regra>[:<servico>]  # motivo
+# Cada linha e uma divida registrada, nao uma licenca: o CI as exibe a cada execucao. Remova a linha ao corrigir.
+#
+# C2: o NPM (proxy do staging) aponta para o container pelo nome fixo "api-gateway-lb". Remover o container_name muda o
+# nome e derruba o gateway ate o NPM ser atualizado. Migrar junto: NPM, stack e nome da stack no Portainer.
+docker-compose-stage.yml:C2:gateway-lb  # NPM aponta para o container api-gateway-lb

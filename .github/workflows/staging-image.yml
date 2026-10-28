@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write   # cria a tag vX.Y.Z da versao publicada
   packages: write
 
 concurrency:
@@ -31,19 +31,34 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Validar a versao do pom (obrigatoria, sem SNAPSHOT, ainda nao usada)
+        id: versao
+        run: python3 .github/scripts/validate-version.py
       - name: Construir e publicar
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           tags: |
+            ${{ env.IMAGE }}:${{ steps.versao.outputs.version }}
             ${{ env.IMAGE }}:staging
             ${{ env.IMAGE }}:sha-${{ github.sha }}
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.versao.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Marcar a versao no Git (tag vX.Y.Z)
+        # A tag registra qual commit gerou a versao e impede reutiliza-la, mesmo que a imagem seja apagada do registry.
+        run: |
+          TAG="v${{ steps.versao.outputs.version }}"
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG ja existe (re-run do mesmo commit)."
+          else
+            git tag "$TAG" "$GITHUB_SHA" && git push origin "$TAG"
+          fi
 
       - name: Acionar deploy no Portainer (pull + redeploy)
         # So dispara o pull da imagem ja publicada acima; o host nao faz build, por isso nao

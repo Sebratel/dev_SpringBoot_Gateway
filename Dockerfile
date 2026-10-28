@@ -28,7 +28,7 @@ ENV TZ=America/Sao_Paulo \
     SERVER_PORT=8085
 WORKDIR /app
 RUN groupadd -g 10001 app && useradd -r -u 10001 -g app app
-COPY --from=build /app/gateway/target/api-gateway-0.1.0-SNAPSHOT.jar app.jar
+COPY --from=build /app/gateway/target/api-gateway-*.jar app.jar
 USER 10001
 EXPOSE 8085
 # Sem curl na imagem: confere só se a porta aceita conexão. O healthcheck HTTP fica no compose.
