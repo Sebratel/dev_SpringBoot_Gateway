@@ -4,7 +4,8 @@
 Uso: validate-compose.py --repo <nome-do-repositorio> --env staging|production [--exceptions arquivo] compose.yml [...]
 
 Regras (erro = exit 1):
-  C1  `name:` no topo do compose existe e e igual ao nome do repositorio no GitHub (= nome da stack no Portainer).
+  C1  `name:` no topo do compose existe e e o nome do repositorio no GitHub EM MINUSCULAS (= nome da stack no Portainer;
+      o Compose recusa maiusculas em `-p`, que e o que o Portainer passa).
   C2  nenhum servico define `container_name` (o Compose gera <stack>-<servico>-<n>).
   C3  nome de servico em minusculas com hifens e sem o nome do repositorio nem palavras de ambiente
       (staging, stage, prod, production, portainer): o nome e o PAPEL (frontend, backend, redis, mysql...).
@@ -64,8 +65,9 @@ def main():
         raw = open(f, encoding="utf-8").read()
         doc = yaml.safe_load(raw) or {}
         name = doc.get("name")
-        if name != args.repo:
-            report(f, "C1", None, f"`name:` deve ser o nome do repositorio '{args.repo}' (encontrado: {name!r}).")
+        expected = args.repo.lower()
+        if name != expected:
+            report(f, "C1", None, f"`name:` deve ser o nome do repositorio em minusculas '{expected}' (encontrado: {name!r}).")
         for svc, cfg in (doc.get("services") or {}).items():
             cfg = cfg or {}
             if "container_name" in cfg:

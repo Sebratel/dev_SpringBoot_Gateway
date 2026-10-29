@@ -8,7 +8,7 @@
 #   - O nginx divide as chamadas entre as instancias (DNS do Docker, renovado a cada 5 s), aplica o limite de taxa
 #     por consumidor COMPARTILHADO entre as instancias e esconde o actuator (metricas ficam na porta 8086, so na rede privada).
 #   - Mais instancias: mude "replicas" (e so isso).
-name: dev_SpringBoot_Gateway   # = nome do repositorio no GitHub (regra de nomes; ver .github/scripts/validate-compose.py)
+name: dev_springboot_gateway   # = nome do repositorio no GitHub, em minusculas (o Compose recusa maiusculas); ver .github/scripts/validate-compose.py
 
 services:
   api-gateway:

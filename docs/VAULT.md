@@ -40,7 +40,7 @@ vault read  -field=role_id   auth/approle/role/api-gateway-staging/role-id
 vault write -f -field=secret_id auth/approle/role/api-gateway-staging/secret-id
 ```
 
-Coloque `role_id` e `secret_id` em `VAULT_ROLE_ID` e `VAULT_SECRET_ID` na stack `dev_SpringBoot_Gateway`
+Coloque `role_id` e `secret_id` em `VAULT_ROLE_ID` e `VAULT_SECRET_ID` na stack `dev_springboot_gateway`
 e remova `SECURITY_USER`, `SECURITY_PASS` e `GATEWAY_CONSUMERS_B64` do Environment.
 
 ## Trocar um segredo ou o cadastro de consumidores
