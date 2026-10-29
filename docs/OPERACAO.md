@@ -2,14 +2,14 @@
 
 ## Desenho (staging)
 ```
-cliente -> NPM -> api-gateway-lb (nginx :8082 / :8094) -> 2 instancias do gateway -> 6 servicos
+cliente -> NPM -> gateway-lb (nginx :8082 / :8094) -> 2 instancias do gateway -> 6 servicos
                                    |                              |
                           rede "proxy" (compartilhada)     rede privada "gateway-backend"
 ```
 - So o **nginx** esta na rede `proxy`. As instancias do gateway e os servicos ficam na rede privada `gateway-backend`:
   ninguem de fora chama o gateway sem passar pelo nginx, nem os servicos sem passar pelo gateway.
 - O endereco publico nao mudou: o NPM continua apontando para a porta 8082 do host (agora do nginx).
-- **Mais instancias**: mude `replicas` em `docker-compose-stage.yml` (stack `api-gateway-staging-novo`) e faca o redeploy.
+- **Mais instancias**: mude `replicas` em `docker-compose-stage.yml` (stack `dev_SpringBoot_Gateway`) e faca o redeploy.
   O nginx reencontra as instancias pelo DNS do Docker a cada 5 s.
 - O nginx **e uma instancia so**. Se cair, o gateway fica inacessivel (o Docker o reinicia sozinho). Para eliminar esse
   ponto unico, o proximo passo e um segundo nginx (VRRP/keepalived ou DNS) - decisao de infraestrutura.

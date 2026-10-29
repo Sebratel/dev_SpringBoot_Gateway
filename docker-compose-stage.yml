@@ -1,7 +1,7 @@
 # Stack de STAGING (Portainer, a partir do Git: branch staging). A imagem e construida no GitHub Actions
 # (workflow staging-image.yml) e publicada no GHCR; o Portainer so a baixa.
 #
-# Desenho:   cliente -> NPM -> api-gateway-lb (nginx, portas 8082/8094) -> 2 instancias do gateway -> 6 servicos
+# Desenho:   cliente -> NPM -> gateway-lb (nginx, portas 8082/8094) -> 2 instancias do gateway -> 6 servicos
 #   - A rede "proxy" (compartilhada com outras aplicacoes) so tem o nginx. As instancias do gateway e os servicos ficam
 #     na rede PRIVADA "gateway-backend": ninguem de fora chama o gateway sem passar pelo nginx, nem os servicos sem
 #     passar pelo gateway. Nenhum servico publica porta.
@@ -57,7 +57,6 @@ services:
   gateway-lb:
     image: nginx:1.27-alpine
     pull_policy: always
-    container_name: api-gateway-lb
     restart: unless-stopped
     mem_limit: 128m
     depends_on:
@@ -139,4 +138,6 @@ networks:
   proxy:
     external: true
   backend:
-    name: gateway-backend   # esta stack cria a rede; os servicos a usam como externa
+    name: gateway-backend
+    external: true   # rede compartilhada com os 6 servicos e com o monitoramento; NAO e criada por esta stack.
+                     # Se nao existir no host: docker network create gateway-backend
