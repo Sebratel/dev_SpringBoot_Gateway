@@ -30,7 +30,7 @@ so precisa destas rotas".
 O `admin` atual **continua funcionando** como o consumidor `legacy-admin` (variaveis `SECURITY_USER`/`SECURITY_PASS`),
 sem restricao. Nada muda para quem ainda nao migrou.
 
-1. **Descobrir quem e quem.** O log do nginx (`api-gateway-lb`) traz o IP real (`xff=`) e a rota de cada chamada.
+1. **Descobrir quem e quem.** O log do nginx (servico `gateway-lb`) traz o IP real (`xff=`) e a rota de cada chamada.
    Agrupe por IP: cada grupo e um sistema. Ate isso, use a proposta abaixo (por familia de rota).
 2. **Criar os consumidores** (comando abaixo), um por sistema.
 3. **Entregar a credencial** a cada dono, por canal seguro, e pedir a troca do `admin` pela credencial nova.
@@ -62,7 +62,7 @@ docker run --rm --entrypoint java ghcr.io/sebratel/api-gateway:staging \
 2. Cole o bloco **COLE NO CADASTRO** num arquivo `consumers.yml` (modelo: `consumers.example.yml`) e ajuste
    `rate-limit`, `allowed-routes` e `expires`.
 3. Converta o arquivo para uma linha e grave na chave `GATEWAY_CONSUMERS_B64` do Vault (`secret/api-gateway/staging`,
-   ver `docs/VAULT.md`), depois faca o redeploy da stack `api-gateway-staging-novo`:
+   ver `docs/VAULT.md`), depois faca o redeploy da stack `dev_springboot_gateway`:
    ```bash
    vault kv patch -mount=secret api-gateway/staging GATEWAY_CONSUMERS_B64="$(base64 -w0 consumers.yml)"
    ```
