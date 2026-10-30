@@ -1242,6 +1242,17 @@
   "headers" : [ ],
   "body" : "MatrixMassiveInputDTO"
 }, {
+  "method" : "POST",
+  "path" : "/api/v1/matrix/telefone",
+  "service" : "massivas",
+  "auth" : "authenticated",
+  "safe" : false,
+  "handler" : "MatrixController#getMassiveInfoByPhone",
+  "pathVariables" : [ ],
+  "queryParams" : [ ],
+  "headers" : [ ],
+  "body" : "MatrixTelefoneInputDTO"
+}, {
   "method" : "GET",
   "path" : "/api/v1/patrimonio-pendente/pendentes",
   "service" : "estoque",
