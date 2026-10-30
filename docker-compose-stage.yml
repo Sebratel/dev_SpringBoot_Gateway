@@ -30,7 +30,7 @@ services:
       - TZ=America/Sao_Paulo
       - JAVA_OPTS=-XX:MaxRAMPercentage=60 -XX:+ExitOnOutOfMemoryError
       - MASSIVAS_URL=http://massivas-service-stage:8101
-      - SPLITTERS_URL=http://splitters-service-stage:8102
+      - SPLITTERS_URL=http://splitters-service:8102
       - COMERCIAL_URL=http://comercial-service-stage:8103
       - RADIUS_URL=http://radius-service-stage:8104
       - ESTOQUE_URL=http://estoque-service-stage:8105
